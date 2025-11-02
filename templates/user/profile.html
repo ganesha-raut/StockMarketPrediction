@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - {{ app_name }}{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-light sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="{{ url_for('user.home') }}">
+            <i class="fas fa-chart-line text-primary me-2"></i>
+            {{ app_name }}
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user.home') }}">
+                        <i class="fas fa-home me-1"></i>Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user.watchlist') }}">
+                        <i class="fas fa-star me-1"></i>Watchlist
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user.notifications') }}">
+                        <i class="fas fa-bell me-1"></i>Notifications
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for('user.profile') }}">
+                        <i class="fas fa-user me-1"></i>Profile
+                    </a>
+                </li>
+            </ul>
+            
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">
+                <i class="fas fa-sign-out-alt me-1"></i>Logout
+            </a>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background: #f9fafb; min-height: 100vh;">
+    <div class="container">
+        <h2 class="mb-4"><i class="fas fa-user-circle text-primary me-2"></i>My Profile</h2>
+        
+        <div class="row">
+            <!-- Profile Info Card -->
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 100px; height: 100px; font-size: 48px;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h4>{{ current_user.username }}</h4>
+                        <p class="text-muted">{{ current_user.email }}</p>
+                        
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Status:</span>
+                                <span class="badge bg-success">Active</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Verified:</span>
+                                <span class="badge bg-{{ 'success' if current_user.is_verified else 'warning' }}">
+                                    {{ 'Yes' if current_user.is_verified else 'No' }}
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Member Since:</span>
+                                <span>{{ current_user.created_at.strftime('%b %Y') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Update Profile Form -->
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-edit me-2"></i>Update Profile
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="profileForm">
+                            <div class="mb-3">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" 
+                                       value="{{ current_user.username }}" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" 
+                                       value="{{ current_user.email }}" required>
+                                <small class="text-muted">Changing email will require verification</small>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Update Profile
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Change Password -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-lock me-2"></i>Change Password
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="passwordForm">
+                            <div class="mb-3">
+                                <label class="form-label">Current Password</label>
+                                <input type="password" class="form-control" id="currentPassword" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">New Password</label>
+                                <input type="password" class="form-control" id="newPassword" 
+                                       minlength="6" required>
+                                <small class="text-muted">Minimum 6 characters</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Confirm New Password</label>
+                                <input type="password" class="form-control" id="confirmPassword" 
+                                       minlength="6" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-key me-1"></i>Change Password
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Update Profile
+$('#profileForm').submit(function(e) {
+    e.preventDefault();
+    
+    const username = $('#username').val();
+    const email = $('#email').val();
+    
+    $.ajax({
+        url: '/user/api/profile/update',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ username, email }),
+        success: function(response) {
+            if (response.success) {
+                showToast('Profile updated successfully!', 'success');
+                if (response.email_changed) {
+                    showToast('Please verify your new email address', 'info');
+                }
+            }
+        },
+        error: function(xhr) {
+            showToast(xhr.responseJSON.message || 'Update failed', 'danger');
+        }
+    });
+});
+
+// Change Password
+$('#passwordForm').submit(function(e) {
+    e.preventDefault();
+    
+    const currentPassword = $('#currentPassword').val();
+    const newPassword = $('#newPassword').val();
+    const confirmPassword = $('#confirmPassword').val();
+    
+    if (newPassword !== confirmPassword) {
+        showToast('New passwords do not match', 'danger');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        showToast('Password must be at least 6 characters', 'danger');
+        return;
+    }
+    
+    $.ajax({
+        url: '/user/api/profile/update',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ 
+            current_password: currentPassword,
+            new_password: newPassword 
+        }),
+        success: function(response) {
+            if (response.success) {
+                showToast('Password changed successfully!', 'success');
+                $('#passwordForm')[0].reset();
+            }
+        },
+        error: function(xhr) {
+            showToast(xhr.responseJSON.message || 'Password change failed', 'danger');
+        }
+    });
+});
+</script>
+{% endblock %}

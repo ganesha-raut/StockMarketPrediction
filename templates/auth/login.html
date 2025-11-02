@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Login - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="card p-4">
+                    <div class="text-center mb-4">
+                        <h2 class="fw-bold">
+                            <i class="fas fa-chart-line text-primary me-2"></i>
+                            Welcome Back
+                        </h2>
+                        <p class="text-muted">Login to your account</p>
+                    </div>
+                    
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember">
+                            <label class="form-check-label" for="remember">Remember me</label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 mb-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </button>
+                        
+                        <div class="text-center">
+                            <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none">Forgot Password?</a>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="text-center">
+                            <p class="mb-0">Don't have an account? 
+                                <a href="{{ url_for('auth.register') }}" class="text-decoration-none fw-bold">Register</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Verification Modal -->
+<div class="modal fade" id="verificationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Email Verification Required</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Please verify your email before logging in. Check your inbox for the OTP.</p>
+                <div class="mb-3">
+                    <label class="form-label">Enter OTP</label>
+                    <input type="text" class="form-control" id="otpCode" maxlength="6">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="resendOTP()">Resend OTP</button>
+                <button type="button" class="btn btn-primary" onclick="verifyOTP()">Verify</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let pendingEmail = '';
+
+$('#loginForm').submit(function(e) {
+    e.preventDefault();
+    
+    const email = $('#email').val();
+    const password = $('#password').val();
+    const remember = $('#remember').is(':checked');
+    
+    $.ajax({
+        url: '{{ url_for("auth.login") }}',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ email, password, remember }),
+        success: function(response) {
+            if (response.success) {
+                showToast('Login successful!', 'success');
+                setTimeout(() => {
+                    window.location.href = response.redirect;
+                }, 1000);
+            }
+        },
+        error: function(xhr) {
+            const response = xhr.responseJSON;
+            if (response.needs_verification) {
+                pendingEmail = response.email;
+                $('#verificationModal').modal('show');
+            } else {
+                showToast(response.message || 'Login failed', 'danger');
+            }
+        }
+    });
+});
+
+function verifyOTP() {
+    const otp = $('#otpCode').val();
+    
+    if (!otp || otp.length !== 6) {
+        showToast('Please enter valid 6-digit OTP', 'warning');
+        return;
+    }
+    
+    $.ajax({
+        url: '{{ url_for("auth.verify_otp") }}',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ email: pendingEmail, otp }),
+        success: function(response) {
+            if (response.success) {
+                showToast('Email verified! Please login again.', 'success');
+                $('#verificationModal').modal('hide');
+                $('#otpCode').val('');
+            }
+        },
+        error: function(xhr) {
+            showToast(xhr.responseJSON.message || 'Verification failed', 'danger');
+        }
+    });
+}
+
+function resendOTP() {
+    $.ajax({
+        url: '{{ url_for("auth.resend_otp") }}',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ email: pendingEmail }),
+        success: function(response) {
+            showToast('OTP sent to your email', 'success');
+        },
+        error: function(xhr) {
+            showToast(xhr.responseJSON.message || 'Failed to send OTP', 'danger');
+        }
+    });
+}
+</script>
+{% endblock %}

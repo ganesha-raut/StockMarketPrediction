@@ -1,0 +1,96 @@
+{% extends "admin/dashboard.html" %}
+{% block title %}Manage Users - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background: #f8f9fa; min-height: 100vh;">
+    <div class="container">
+        <h2 class="mb-4"><i class="fas fa-users text-primary me-2"></i>Manage Users</h2>
+        
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Verified</th>
+                                <th>Status</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center">
+                                    <div class="spinner-border text-primary"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+$(document).ready(function() {
+    loadUsers();
+});
+
+function loadUsers() {
+    $.get('/admin/api/users', function(response) {
+        if (response.success) {
+            let html = '';
+            response.data.forEach(user => {
+                if (user.is_admin) return; // Skip admin users
+                
+                const verifiedBadge = user.is_verified ? 
+                    '<span class="badge bg-success">✓ Verified</span>' : 
+                    '<span class="badge bg-warning">⚠ Unverified</span>';
+                const statusBadge = user.is_active ? 
+                    '<span class="badge bg-primary">Active</span>' : 
+                    '<span class="badge bg-secondary">Inactive</span>';
+                    
+                html += `
+                    <tr>
+                        <td><strong>${user.username}</strong></td>
+                        <td>${user.email}</td>
+                        <td>${verifiedBadge}</td>
+                        <td>${statusBadge}</td>
+                        <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn btn-sm btn-${user.is_active ? 'warning' : 'success'}" 
+                                    onclick="toggleUserStatus(${user.id})">
+                                <i class="fas fa-${user.is_active ? 'ban' : 'check'}"></i>
+                                ${user.is_active ? 'Deactivate' : 'Activate'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            $('#usersTableBody').html(html || '<tr><td colspan="6" class="text-center">No users found</td></tr>');
+        }
+    });
+}
+
+function toggleUserStatus(userId) {
+    $.ajax({
+        url: '/admin/api/user/toggle-status',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({user_id: userId}),
+        success: function(response) {
+            if (response.success) {
+                showToast('User status updated', 'success');
+                loadUsers();
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

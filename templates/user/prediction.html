@@ -1,0 +1,852 @@
+{% extends "base.html" %}
+{% block title %}Prediction - {{ symbol }}{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-light sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="{{ url_for('user.home') }}">
+            <i class="fas fa-chart-line text-primary me-2"></i>
+            {{ app_name }}
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user.home') }}">
+                        <i class="fas fa-home me-1"></i>Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for('user.watchlist') }}">
+                        <i class="fas fa-star me-1"></i>Watchlist
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user.notifications') }}">
+                        <i class="fas fa-bell me-1"></i>Notifications
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user.profile') }}">
+                        <i class="fas fa-user me-1"></i>Profile
+                    </a>
+                </li>
+            </ul>
+            
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">
+                <i class="fas fa-sign-out-alt me-1"></i>Logout
+            </a>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+{% block content %}
+<div class="container-fluid py-4" style="background: #f9fafb; min-height: 100vh;">
+    <div class="container">
+        <!-- Stock Header -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h2 class="mb-2"><strong id="stockSymbol">{{ symbol }}</strong></h2>
+                        <p class="text-muted mb-0" id="stockName">Loading...</p>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h3 class="mb-0" id="livePrice">₹0.00</h3>
+                        <small id="priceChange" class="text-muted">0.00%</small>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <div id="marketStatus" class="badge bg-secondary p-2">
+                            <i class="fas fa-circle-notch fa-spin me-1"></i>Checking...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left Column: Prediction -->
+            <div class="col-lg-8">
+                <!-- Prediction Type Selection -->
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-brain me-2"></i>AI Stock Prediction</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label"><strong>Prediction Type:</strong></label>
+                                <select class="form-select" id="predictionType">
+                                    <option value="">-- Select Prediction Type --</option>
+                                    <option value="intraday">Intraday (Today's Closing Price)</option>
+                                    <option value="longterm">Long Term (Future Price Prediction)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Intraday Options -->
+                        <div id="intradaySection" style="display:none;">
+                            <div class="alert alert-info mb-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Intraday Trading:</strong> Predict today's closing price based on current market conditions.
+                            </div>
+                            <div id="marketStatusCheck" class="mb-3"></div>
+                            <div id="investmentInputSection" style="display:none;">
+                                <label class="form-label"><strong>Investment Amount (₹):</strong></label>
+                                <input type="number" class="form-control" id="investmentAmount" placeholder="Enter investment amount (minimum ₹100)" min="100" step="100">
+                                <small class="text-muted">Enter the amount you want to invest to calculate potential profit/loss</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Long Term Options -->
+                        <div id="longtermSection" style="display:none;">
+                            <div class="alert alert-info mb-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Long Term Prediction:</strong> Predict future stock price based on historical trends and AI analysis.
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Prediction Period:</strong></label>
+                                <select class="form-select" id="predictionPeriod">
+                                    <option value="7">Next 7 Days</option>
+                                    <option value="15">Next 15 Days</option>
+                                    <option value="30">Next 30 Days</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Investment Amount (₹):</strong></label>
+                                <input type="number" class="form-control" id="longtermInvestment" placeholder="Enter investment amount (minimum ₹100)" min="100" step="100">
+                                <small class="text-muted">Enter the amount you want to invest to calculate potential returns</small>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-lg w-100" onclick="makePrediction()">
+                            <i class="fas fa-chart-line me-2"></i>Get AI Prediction
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Prediction Results -->
+                <div id="predictionResult"></div>
+
+                <!-- Price Chart -->
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-candlestick me-2"></i>Candlestick Chart (30 Days)</h5>
+                    </div>
+                    <div class="card-body" style="background: #1a1a1a;">
+                        <div style="height: 400px; position: relative;">
+                            <canvas id="priceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: News & Info -->
+            <div class="col-lg-4">
+                <!-- Latest News -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-newspaper me-2"></i>Latest News</h5>
+                    </div>
+                    <div class="card-body" id="newsSection" style="max-height: 600px; overflow-y: auto;">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary"></div>
+                            <p class="mt-2">Loading news...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let stockData = null;
+let priceChart = null;
+let marketOpen = false;
+
+// Initialize
+$(document).ready(function() {
+    loadStockData();
+    loadMarketStatus();
+    loadNews();
+    loadChartData();
+    
+    // Handle prediction type change
+    $('#predictionType').change(function() {
+        const type = $(this).val();
+        
+        // Hide all sections first
+        $('#intradaySection').hide();
+        $('#longtermSection').hide();
+        $('#predictionResult').html('');
+        
+        if (type === 'intraday') {
+            $('#intradaySection').show();
+            checkMarketForIntraday();
+        } else if (type === 'longterm') {
+            $('#longtermSection').show();
+        }
+    });
+});
+
+// Load Stock Data
+function loadStockData() {
+    $.get('/user/api/stock/{{ symbol }}', function(response) {
+        if (response.success) {
+            stockData = response.data;
+            const liveData = stockData.live_data;
+            
+            $('#stockName').text(liveData.name || '{{ symbol }}');
+            $('#livePrice').text('₹' + (liveData.live_price || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
+            
+            const changeClass = (liveData.change_price || 0) > 0 ? 'text-success' : 'text-danger';
+            const changeIcon = (liveData.change_price || 0) > 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+            $('#priceChange').html(`<i class="fas ${changeIcon} me-1"></i>${liveData.percent_change_formatted || '0.00%'}`);
+            $('#priceChange').removeClass('text-success text-danger').addClass(changeClass);
+            
+            // Check if model is trained
+            if (!stockData.has_model) {
+                showToast('⚠️ Model not trained for this stock. Train it in admin panel first!', 'warning');
+                $('#predictionResult').html(`
+                    <div class="alert alert-warning">
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i>Model Not Trained</h5>
+                        <p>The ML model for <strong>{{ symbol }}</strong> hasn't been trained yet.</p>
+                        <p class="mb-0"><strong>To train the model:</strong></p>
+                        <ol class="mb-0 mt-2">
+                            <li>Run: <code>python train_single_stock.py {{ symbol }}</code></li>
+                            <li>Or train all models: <code>python train_all_models.py</code></li>
+                            <li>Wait 2-3 minutes for training to complete</li>
+                            <li>Refresh this page and try again</li>
+                        </ol>
+                    </div>
+                `);
+            }
+        }
+    }).fail(function(xhr) {
+        console.error('Failed to load stock data:', xhr);
+        const errorMsg = xhr.responseJSON?.message || 'Unable to fetch stock data';
+        showToast('Error: ' + errorMsg, 'danger');
+        $('#stockName').text('{{ symbol }}');
+        $('#livePrice').text('₹0.00');
+    });
+}
+
+// Load Market Status
+function loadMarketStatus() {
+    $.get('/user/api/market-status', function(response) {
+        if (response.success) {
+            marketOpen = response.data.is_open;
+            const statusDiv = $('#marketStatus');
+            
+            if (marketOpen) {
+                statusDiv.html('<i class="fas fa-circle text-success me-1"></i>Market Open');
+                statusDiv.removeClass('bg-secondary bg-danger').addClass('bg-success');
+            } else {
+                statusDiv.html('<i class="fas fa-circle text-white me-1"></i>Market Closed');
+                statusDiv.removeClass('bg-secondary bg-success').addClass('bg-danger');
+            }
+        }
+    });
+}
+
+// Check Market Status for Intraday
+function checkMarketForIntraday() {
+    const checkDiv = $('#marketStatusCheck');
+    checkDiv.html('<div class="text-center"><div class="spinner-border spinner-border-sm me-2"></div>Checking market status...</div>');
+    
+    $.get('/user/api/market-status', function(response) {
+        if (response.success) {
+            marketOpen = response.data.is_open;
+            
+            if (marketOpen) {
+                checkDiv.html(`
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Market is OPEN!</strong> You can proceed with intraday trading.
+                        <p class="mb-0 mt-2 small">Market closes at ${response.data.close_time || '3:30 PM'}. Predictions are based on current market trends.</p>
+                    </div>
+                `);
+                $('#investmentInputSection').show();
+            } else {
+                checkDiv.html(`
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Market is CLOSED!</strong>
+                        <p class="mb-0 mt-2">Intraday predictions are only available during market hours (9:15 AM - 3:30 PM IST).</p>
+                        <p class="mb-0 mt-2 small">Market opens at ${response.data.open_time || '9:15 AM'}. Please try long-term prediction instead.</p>
+                    </div>
+                `);
+                $('#investmentInputSection').hide();
+            }
+        }
+    }).fail(function() {
+        checkDiv.html(`
+            <div class="alert alert-danger">
+                <i class="fas fa-times-circle me-2"></i>
+                Failed to check market status. Please try again.
+            </div>
+        `);
+    });
+}
+
+// Load News
+function loadNews() {
+    $.get('/api/stock-news/{{ symbol }}', function(response) {
+        console.log('News response:', response);
+        
+        if (response.success && response.data.length > 0) {
+            let html = '';
+            response.data.forEach((news, i) => {
+                console.log('News item:', news.title, 'Link:', news.link);
+                const sentimentClass = news.sentiment > 0 ? 'success' : news.sentiment < 0 ? 'danger' : 'secondary';
+                const sentimentText = news.sentiment > 0 ? 'Positive' : news.sentiment < 0 ? 'Negative' : 'Neutral';
+                const sentimentIcon = news.sentiment > 0 ? 'fa-arrow-up' : news.sentiment < 0 ? 'fa-arrow-down' : 'fa-minus';
+                
+                // Full snippet with fallback
+                let snippet = news.snippet || '';
+                if (!snippet || snippet === 'No description available') {
+                    snippet = `Latest update on ${news.title}. Click to read more about this development and its market impact.`;
+                }
+                const newsId = `news-${i}`;
+                
+                html += `
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-body p-3">
+                            <h6 class="mb-2 text-dark">
+                                <i class="fas fa-newspaper me-2 text-primary"></i>${news.title}
+                            </h6>
+                            
+                            <!-- Short preview -->
+                            <div id="${newsId}-preview" class="news-preview">
+                                <p class="text-muted small mb-2">${snippet.substring(0, 150)}${snippet.length > 150 ? '...' : ''}</p>
+                            </div>
+                            
+                            <!-- Full content (hidden by default) -->
+                            <div id="${newsId}-full" class="news-full" style="display: none;">
+                                <p class="text-muted small mb-2">${snippet}</p>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-building me-1"></i>${news.source}
+                                    ${news.time ? ` • <i class="fas fa-clock me-1"></i>${news.time}` : ''}
+                                </small>
+                                <span class="badge bg-${sentimentClass}">
+                                    <i class="fas ${sentimentIcon} me-1"></i>${sentimentText}
+                                </span>
+                            </div>
+                            
+                            <!-- Expand/Collapse button -->
+                            ${snippet.length > 150 ? `
+                                <button class="btn btn-sm btn-outline-primary w-100" onclick="toggleNews('${newsId}')">
+                                    <i class="fas fa-chevron-down me-1" id="${newsId}-icon"></i>
+                                    <span id="${newsId}-text">Read More</span>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            $('#newsSection').html(html);
+        } else {
+            $('#newsSection').html(`
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No recent news available for {{ symbol }}
+                </div>
+            `);
+        }
+    }).fail(function() {
+        $('#newsSection').html(`
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Failed to load news
+            </div>
+        `);
+    });
+}
+
+// Load Chart Data
+function loadChartData() {
+    console.log('Loading chart data for {{ symbol }}...');
+    
+    $.get('/api/stock-chart-data/{{ symbol }}', function(response) {
+        console.log('Chart data response:', response);
+        
+        if (response.success && response.data && response.data.length > 0) {
+            console.log('Creating chart with', response.data.length, 'data points');
+            createCandlestickChart(response.data);
+        } else {
+            console.warn('No chart data available');
+            $('#priceChart').parent().html(`
+                <div class="alert alert-warning text-center">
+                    <i class="fas fa-chart-line me-2"></i>
+                    No historical data available for chart
+                </div>
+            `);
+        }
+    }).fail(function(xhr, status, error) {
+        console.error('Failed to load chart data:', error);
+        console.error('Status:', status);
+        console.error('Response:', xhr.responseText);
+        
+        $('#priceChart').parent().html(`
+            <div class="alert alert-danger text-center">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Failed to load chart data
+            </div>
+        `);
+    });
+}
+
+// Create Candlestick Chart
+function createCandlestickChart(data) {
+    try {
+        console.log('Creating candlestick chart...');
+        
+        const ctx = document.getElementById('priceChart');
+        if (!ctx) {
+            console.error('Canvas element not found');
+            return;
+        }
+        
+        // Destroy existing chart if any
+        if (priceChart) {
+            priceChart.destroy();
+        }
+        
+        // Prepare candlestick data
+        const candlestickData = data.map(d => ({
+            x: new Date(d.date).getTime(),
+            o: d.open,
+            h: d.high,
+            l: d.low,
+            c: d.close
+        }));
+        
+        console.log('Candlestick data prepared:', candlestickData.length, 'candles');
+    
+    // Prepare volume data
+    const volumeData = data.map(d => ({
+        x: new Date(d.date).getTime(),
+        y: d.volume
+    }));
+    
+    // Prepare labels (dates as strings)
+    const labels = data.map(d => {
+        const date = new Date(d.date);
+        return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+    });
+    
+    // Create professional candlestick chart (AngelOne/Zerodha style)
+    priceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Dummy',
+                data: data.map(d => d.close),
+                borderWidth: 0,
+                pointRadius: 0
+            }]
+        },
+        plugins: [{
+            id: 'professionalCandlestick',
+            afterDatasetsDraw: function(chart) {
+                const ctx = chart.ctx;
+                const xAxis = chart.scales.x;
+                const yAxis = chart.scales.y;
+                
+                data.forEach((d, i) => {
+                    const x = xAxis.getPixelForValue(i);
+                    const yOpen = yAxis.getPixelForValue(d.open);
+                    const yClose = yAxis.getPixelForValue(d.close);
+                    const yHigh = yAxis.getPixelForValue(d.high);
+                    const yLow = yAxis.getPixelForValue(d.low);
+                    
+                    const isBullish = d.close >= d.open;
+                    const candleWidth = 10;
+                    
+                    // Colors - AngelOne style
+                    const bullColor = '#00C853';  // Bright green
+                    const bearColor = '#FF1744';  // Bright red
+                    const color = isBullish ? bullColor : bearColor;
+                    
+                    // Draw wick (thin line from high to low)
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(x, yHigh);
+                    ctx.lineTo(x, yLow);
+                    ctx.stroke();
+                    
+                    // Draw body (rectangle from open to close)
+                    const bodyHeight = Math.abs(yClose - yOpen) || 1;
+                    const bodyY = Math.min(yOpen, yClose);
+                    
+                    ctx.fillStyle = color;
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 1;
+                    
+                    // Bullish candle - filled
+                    if (isBullish) {
+                        ctx.fillRect(x - candleWidth/2, bodyY, candleWidth, bodyHeight);
+                    } else {
+                        // Bearish candle - filled
+                        ctx.fillRect(x - candleWidth/2, bodyY, candleWidth, bodyHeight);
+                    }
+                    
+                    // Add border for definition
+                    ctx.strokeRect(x - candleWidth/2, bodyY, candleWidth, bodyHeight);
+                });
+            }
+        }],
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#fff',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#667eea',
+                    borderWidth: 1,
+                    callbacks: {
+                        title: function(context) {
+                            return data[context[0].dataIndex].date;
+                        },
+                        afterTitle: function(context) {
+                            const idx = context[0].dataIndex;
+                            const d = data[idx];
+                            return [
+                                `Open: ₹${d.open.toFixed(2)}`,
+                                `High: ₹${d.high.toFixed(2)}`,
+                                `Low: ₹${d.low.toFixed(2)}`,
+                                `Close: ₹${d.close.toFixed(2)}`,
+                                `Volume: ${d.volume.toLocaleString('en-IN')}`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date',
+                        color: '#fff'
+                    },
+                    ticks: {
+                        color: '#aaa',
+                        maxRotation: 45,
+                        minRotation: 45
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                y: {
+                    beginAtZero: false,
+                    title: {
+                        display: true,
+                        text: 'Price (₹)',
+                        color: '#fff'
+                    },
+                    ticks: {
+                        color: '#aaa',
+                        callback: function(value) {
+                            return '₹' + value.toFixed(2);
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                }
+            }
+        }
+    });
+    
+    console.log('Chart created successfully');
+    
+    } catch (error) {
+        console.error('Error creating chart:', error);
+        $('#priceChart').parent().html(`
+            <div class="alert alert-danger text-center">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Error creating chart: ${error.message}
+            </div>
+        `);
+    }
+}
+
+// Make Prediction
+function makePrediction() {
+    const type = $('#predictionType').val();
+    
+    // Validate prediction type selection
+    if (!type) {
+        showToast('Please select a prediction type (Intraday or Long Term)', 'warning');
+        $('#predictionType').focus();
+        return;
+    }
+    
+    // Intraday validation
+    if (type === 'intraday') {
+        if (!marketOpen) {
+            showToast('Market is closed. Intraday prediction not available.', 'warning');
+            return;
+        }
+        
+        const investment = $('#investmentAmount').val();
+        if (!investment || investment < 100) {
+            showToast('Please enter investment amount (minimum ₹100)', 'warning');
+            $('#investmentAmount').focus();
+            return;
+        }
+    }
+    
+    // Long term validation
+    let predictionPeriod = 7;
+    let longtermInvestment = null;
+    if (type === 'longterm') {
+        predictionPeriod = parseInt($('#predictionPeriod').val()) || 7;
+        longtermInvestment = $('#longtermInvestment').val();
+        
+        if (!longtermInvestment || longtermInvestment < 100) {
+            showToast('Please enter investment amount (minimum ₹100)', 'warning');
+            $('#longtermInvestment').focus();
+            return;
+        }
+    }
+    
+    // Show loading
+    $('#predictionResult').html(`
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
+                <h5>Analyzing with AI...</h5>
+                <p class="text-muted">Processing ${type === 'intraday' ? 'intraday' : predictionPeriod + ' days'} prediction for {{ symbol }}</p>
+            </div>
+        </div>
+    `);
+    
+    // Prepare request data
+    const requestData = {
+        type: type,
+        investment: type === 'intraday' ? parseFloat($('#investmentAmount').val()) : parseFloat(longtermInvestment),
+        period: type === 'longterm' ? predictionPeriod : null
+    };
+    
+    $.ajax({
+        url: '/api/predict/{{ symbol }}',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(requestData),
+        success: function(response) {
+            if (response.success) {
+                displayPredictionResult(response.data, type, requestData);
+            }
+        },
+        error: function(xhr) {
+            const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Prediction failed. Please ensure the model is trained in admin panel.';
+            $('#predictionResult').html(`
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i><strong>Error:</strong> ${msg}
+                    <p class="mb-0 mt-2 small">Tip: Make sure the stock model is trained in the admin panel before making predictions.</p>
+                </div>
+            `);
+        }
+    });
+}
+
+// Display Prediction Result
+function displayPredictionResult(data, type, requestData) {
+    const changeClass = data.price_change > 0 ? 'success' : 'danger';
+    const trendClass = data.trend === 'bullish' ? 'success' : data.trend === 'bearish' ? 'danger' : 'secondary';
+    const recClass = data.recommendation === 'BUY' ? 'success' : data.recommendation === 'SELL' ? 'danger' : 'warning';
+    
+    let investmentCalc = '';
+    
+    // Investment Calculator (for both intraday and longterm - using server calculation)
+    if (data.investment) {
+        const inv = data.investment;
+        const periodText = type === 'longterm' && data.period ? ` (${data.period.period_days} Days)` : '';
+        
+        investmentCalc = `
+            <div class="card bg-light mb-3">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="fas fa-calculator me-2"></i>Investment Calculator${periodText}</h6>
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <p class="mb-0 text-muted small">Investment</p>
+                            <h6>₹${inv.actual_investment.toLocaleString('en-IN', {minimumFractionDigits: 2})}</h6>
+                            ${inv.remaining_cash > 0 ? `<small class="text-muted">(₹${inv.remaining_cash.toFixed(2)} unused)</small>` : ''}
+                        </div>
+                        <div class="col-md-3">
+                            <p class="mb-0 text-muted small">Shares</p>
+                            <h6>${inv.shares}</h6>
+                            <small class="text-muted">@ ₹${inv.buy_price.toFixed(2)}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="mb-0 text-muted small">Target Value</p>
+                            <h6>₹${inv.predicted_value.toLocaleString('en-IN', {minimumFractionDigits: 2})}</h6>
+                            <small class="text-muted">@ ₹${inv.target_price.toFixed(2)}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="mb-0 text-muted small">Expected Profit</p>
+                            <h6 class="text-${inv.profit_loss >= 0 ? 'success' : 'danger'}">
+                                ${inv.profit_loss >= 0 ? '+' : ''}₹${inv.profit_loss.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                                <small>(${inv.profit_loss_percent >= 0 ? '+' : ''}${inv.profit_loss_percent.toFixed(2)}%)</small>
+                            </h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    // Investment calculator is already shown above for both types
+    
+    const html = `
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-${changeClass} text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    ${type === 'intraday' ? 'Intraday' : 'Long Term'} Prediction Result
+                </h5>
+            </div>
+            <div class="card-body">
+                ${investmentCalc}
+                
+                <div class="row text-center mb-4">
+                    <div class="col-md-4">
+                        <p class="mb-1 text-muted">Current Price</p>
+                        <h4>₹${data.current_price.toLocaleString('en-IN', {minimumFractionDigits: 2})}</h4>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="mb-1 text-muted">Predicted Price</p>
+                        <h4 class="text-${changeClass}">₹${data.predicted_price.toLocaleString('en-IN', {minimumFractionDigits: 2})}</h4>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="mb-1 text-muted">Expected Change</p>
+                        <h4 class="text-${changeClass}">
+                            ${data.percent_change > 0 ? '+' : ''}${data.percent_change.toFixed(2)}%
+                        </h4>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                            <span><strong>Trend:</strong></span>
+                            <span class="badge bg-${trendClass} fs-6">${data.trend.toUpperCase()}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                            <span><strong>Recommendation:</strong></span>
+                            <span class="badge bg-${recClass} fs-6">${data.recommendation}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                            <span><strong>Confidence:</strong></span>
+                            <span class="badge bg-primary fs-6">${data.confidence.toFixed(1)}%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-${data.risk_percentage > 70 ? 'danger' : data.risk_percentage > 40 ? 'warning' : 'success'}">
+                    <strong><i class="fas fa-exclamation-triangle me-2"></i>Risk Level:</strong> ${data.risk_percentage.toFixed(1)}%
+                    <p class="mb-0 mt-2 small">
+                        ${data.risk_percentage > 70 ? 'High risk - Consider waiting or reducing investment' : 
+                          data.risk_percentage > 40 ? 'Moderate risk - Proceed with caution' : 
+                          'Low risk - Good opportunity'}
+                    </p>
+                </div>
+                
+                ${data.ai_insight ? `
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-robot me-2"></i>AI Insight:</h6>
+                        <p class="mb-0">${data.ai_insight}</p>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    
+    $('#predictionResult').html(html);
+}
+
+// Toggle news expand/collapse
+function toggleNews(newsId) {
+    const preview = $(`#${newsId}-preview`);
+    const full = $(`#${newsId}-full`);
+    const icon = $(`#${newsId}-icon`);
+    const text = $(`#${newsId}-text`);
+    
+    if (full.is(':visible')) {
+        // Collapse
+        full.slideUp(300);
+        preview.slideDown(300);
+        icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        text.text('Read More');
+    } else {
+        // Expand
+        preview.slideUp(300);
+        full.slideDown(300);
+        icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+        text.text('Show Less');
+        
+        // Track news view
+        console.log('News expanded:', newsId);
+    }
+}
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    const bgColor = type === 'success' ? 'bg-success' : 
+                    type === 'danger' ? 'bg-danger' : 
+                    type === 'warning' ? 'bg-warning' : 'bg-info';
+    
+    const toast = $(`
+        <div class="toast align-items-center text-white ${bgColor} border-0" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `);
+    
+    $('body').append(toast);
+    const bsToast = new bootstrap.Toast(toast[0], {delay: 3000});
+    bsToast.show();
+    
+    toast.on('hidden.bs.toast', function() {
+        $(this).remove();
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard - {{ app_name }}{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="{{ url_for('admin.dashboard') }}">
+            <i class="fas fa-shield-alt text-warning me-2"></i>
+            Admin Panel
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for('admin.dashboard') }}">
+                        <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin.stocks') }}">
+                        <i class="fas fa-chart-line me-1"></i>Stocks
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin.users') }}">
+                        <i class="fas fa-users me-1"></i>Users
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="d-flex align-items-center">
+                <span class="text-white me-3">
+                    <i class="fas fa-user-shield me-1"></i>{{ current_user.username }}
+                </span>
+                <a href="{{ url_for('user.home') }}" class="btn btn-outline-light btn-sm me-2">
+                    <i class="fas fa-home me-1"></i>User Panel
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background: #f8f9fa; min-height: 100vh;">
+    <div class="container">
+        <h2 class="mb-4">
+            <i class="fas fa-tachometer-alt text-primary me-2"></i>Admin Dashboard
+        </h2>
+        
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card bg-primary text-white shadow">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-uppercase mb-1">Total Users</h6>
+                                <h3 class="mb-0" id="totalUsers">0</h3>
+                            </div>
+                            <i class="fas fa-users fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card bg-success text-white shadow">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-uppercase mb-1">Active Users</h6>
+                                <h3 class="mb-0" id="activeUsers">0</h3>
+                            </div>
+                            <i class="fas fa-user-check fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card bg-info text-white shadow">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-uppercase mb-1">Total Stocks</h6>
+                                <h3 class="mb-0" id="totalStocks">0</h3>
+                            </div>
+                            <i class="fas fa-chart-line fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card bg-warning text-white shadow">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-uppercase mb-1">Trained Models</h6>
+                                <h3 class="mb-0" id="trainedModels">0</h3>
+                            </div>
+                            <i class="fas fa-brain fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <button class="btn btn-primary w-100" onclick="trainAllModels()">
+                                    <i class="fas fa-brain me-2"></i>Train All Models
+                                </button>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="{{ url_for('admin.stocks') }}" class="btn btn-success w-100">
+                                    <i class="fas fa-plus me-2"></i>Add New Stock
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <button class="btn btn-info w-100" onclick="refreshData()">
+                                    <i class="fas fa-sync-alt me-2"></i>Refresh Dashboard
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Stock Status</h5>
+                    </div>
+                    <div class="card-body" id="stockStatus" style="max-height: 400px; overflow-y: auto;">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-users me-2"></i>Recent Users</h5>
+                    </div>
+                    <div class="card-body" id="recentUsers" style="max-height: 400px; overflow-y: auto;">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-success"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    loadDashboardData();
+});
+
+function loadDashboardData() {
+    // Load statistics
+    $.get('/admin/api/dashboard-stats', function(response) {
+        if (response.success) {
+            $('#totalUsers').text(response.data.total_users);
+            $('#activeUsers').text(response.data.active_users);
+            $('#totalStocks').text(response.data.total_stocks);
+            $('#trainedModels').text(response.data.trained_models);
+        }
+    });
+    
+    // Load stock status
+    $.get('/admin/api/stocks', function(response) {
+        if (response.success && response.data.length > 0) {
+            let html = '<div class="list-group">';
+            response.data.forEach(stock => {
+                const statusBadge = stock.has_model ? 
+                    '<span class="badge bg-success">✓ Trained</span>' : 
+                    '<span class="badge bg-warning">⚠ Not Trained</span>';
+                const activeBadge = stock.is_active ? 
+                    '<span class="badge bg-primary">Active</span>' : 
+                    '<span class="badge bg-secondary">Inactive</span>';
+                    
+                html += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${stock.symbol}</strong> - ${stock.name}
+                            <br><small class="text-muted">Last trained: ${stock.last_trained || 'Never'}</small>
+                        </div>
+                        <div>
+                            ${statusBadge}
+                            ${activeBadge}
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            $('#stockStatus').html(html);
+        } else {
+            $('#stockStatus').html('<p class="text-muted">No stocks found</p>');
+        }
+    });
+    
+    // Load recent users
+    $.get('/admin/api/users', function(response) {
+        if (response.success && response.data.length > 0) {
+            let html = '<div class="list-group">';
+            response.data.slice(0, 10).forEach(user => {
+                const verifiedBadge = user.is_verified ? 
+                    '<span class="badge bg-success">✓ Verified</span>' : 
+                    '<span class="badge bg-warning">⚠ Unverified</span>';
+                const activeBadge = user.is_active ? 
+                    '<span class="badge bg-primary">Active</span>' : 
+                    '<span class="badge bg-secondary">Inactive</span>';
+                    
+                html += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${user.username}</strong>
+                            <br><small class="text-muted">${user.email}</small>
+                        </div>
+                        <div>
+                            ${verifiedBadge}
+                            ${activeBadge}
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            $('#recentUsers').html(html);
+        } else {
+            $('#recentUsers').html('<p class="text-muted">No users found</p>');
+        }
+    });
+}
+
+function trainAllModels() {
+    if (!confirm('This will train ML models for all stocks. This may take 5-10 minutes. Continue?')) {
+        return;
+    }
+    
+    showToast('Training started. This may take several minutes...', 'info');
+    
+    $.post('/admin/api/train-all-models', function(response) {
+        if (response.success) {
+            showToast('All models trained successfully!', 'success');
+            loadDashboardData();
+        } else {
+            showToast('Training failed: ' + response.message, 'danger');
+        }
+    }).fail(function() {
+        showToast('Training failed. Please use the Python script instead.', 'danger');
+    });
+}
+
+function refreshData() {
+    showToast('Refreshing dashboard...', 'info');
+    loadDashboardData();
+}
+</script>
+{% endblock %}
