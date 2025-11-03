@@ -95,38 +95,6 @@ let allStocksData = [];
 let currentFilter = 'all';
 
 
-function loadSection(section) {
-    if (currentSection === section) return;
-    
-    // Update nav
-    $('.nav-link').removeClass('active');
-    $(`.nav-link[data-section="${section}"]`).addClass('active');
-    
-    // Hide all sections
-    $('.content-section').removeClass('active');
-    
-    // Show selected section
-    $(`#section-${section}`).addClass('active');
-    currentSection = section;
-    
-    // Load section data
-    switch(section) {
-        case 'home':
-            if (!dataCache.home) {
-                loadHomeData();
-            }
-            break;
-        case 'watchlist':
-            loadWatchlistData();
-            break;
-        case 'notifications':
-            loadNotificationsData();
-            break;
-        case 'profile':
-            loadProfileData();
-            break;
-    }
-}
 
 // Load market status
 function loadMarketStatus() {

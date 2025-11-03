@@ -3,7 +3,6 @@ from flask_login import login_required, current_user
 from functools import wraps
 from models import db, User, Stock, EmailConfig, ModelTraining, HistoricalData
 from utils.stock_data import get_historical_data_yfinance
-from utils.ml_model import StockPredictionModel, get_model_path
 from utils.gemini_ai import get_gemini
 from werkzeug.utils import secure_filename
 import pandas as pd
@@ -502,3 +501,6 @@ def api_email_config_update():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
+
+# Note: Model training removed from admin panel
+# Use command line script instead: python retrain_models_improved.py

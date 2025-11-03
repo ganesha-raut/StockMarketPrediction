@@ -2,10 +2,13 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from models import db, Stock, Prediction, HistoricalData
 from utils.stock_data import get_google_stock_data, get_stock_news
-from utils.ml_model import load_or_create_model
+from utils.enhanced_ml_model_lite import load_or_create_enhanced_model, get_enhanced_model_path
 from utils.gemini_ai import get_gemini
+from utils.news_analyzer import get_news_analyzer
+from utils.hybrid_predictor import get_hybrid_predictor
 from datetime import datetime, timedelta
 import pandas as pd
+import os
 
 api_bp = Blueprint('api', __name__)
 
@@ -23,46 +26,38 @@ def predict_stock(symbol):
         
         data = request.get_json()
         prediction_type = data.get('type', 'intraday')  # 'intraday' or 'long_term'
+        prediction_period = int(data.get('period', 7)) if data.get('period') else 7  # Number of days
         
-        # Get recent historical data
+        # Get recent historical data - Enhanced model needs more data for features
         recent_data = HistoricalData.query.filter_by(
             stock_id=stock.id
-        ).order_by(HistoricalData.date.desc()).limit(100).all()
+        ).order_by(HistoricalData.date.desc()).limit(300).all()
         
         if len(recent_data) < 50:
-            return jsonify({'success': False, 'message': 'Insufficient historical data'}), 400
+            return jsonify({'success': False, 'message': 'Insufficient historical data. Please ensure stock data is updated.'}), 400
         
-        # Convert to DataFrame
+        # Convert to DataFrame - Enhanced model needs different column names
         df = pd.DataFrame([{
-            'date': d.date,
-            'open_price': d.open_price,
-            'high_price': d.high_price,
-            'low_price': d.low_price,
-            'close_price': d.close_price,
-            'volume': d.volume,
-            'dividend': d.dividend
+            'Date': d.date,
+            'Open': d.open_price,
+            'High': d.high_price,
+            'Low': d.low_price,
+            'Close': d.close_price,
+            'Volume': d.volume
         } for d in reversed(recent_data)])
         
-        # Get sentiment score
+        # Initialize variables
         sentiment_score = 0.0
         gemini = get_gemini()
-        if gemini:
-            news = get_stock_news(symbol, limit=10)
-            if news:
-                analyzed = gemini.analyze_news_batch(news)
-                sentiment_scores = [item.get('sentiment_score', 0.0) for item in analyzed]
-                sentiment_score = sum(sentiment_scores) / len(sentiment_scores) if sentiment_scores else 0.0
         
-        # Load model and predict
-        model = load_or_create_model(stock.symbol)
+        # Use HYBRID AI + SI + ML Predictor for superior predictions
+        hybrid_predictor = get_hybrid_predictor(stock.symbol, stock.name)
         
-        if not model.model:
-            return jsonify({'success': False, 'message': 'Model not loaded'}), 500
+        # Get hybrid prediction (combines AI, SI, and ML)
+        prediction_result = hybrid_predictor.hybrid_predict(days_ahead=prediction_period)
         
-        prediction_result = model.predict(df, sentiment_score)
-        
-        if not prediction_result['success']:
-            return jsonify({'success': False, 'message': prediction_result.get('error')}), 500
+        if not prediction_result or not prediction_result.get('success', False):
+            return jsonify({'success': False, 'message': prediction_result.get('error', 'Prediction failed')}), 500
         
         # Get live data
         live_data = get_google_stock_data(symbol)
@@ -83,10 +78,30 @@ def predict_stock(symbol):
         db.session.add(prediction)
         db.session.commit()
         
-        # Get AI insight
+        # Get AI insight with news analysis
         ai_insight = ""
+        news_analysis = ""
+        
         if gemini and live_data:
             ai_insight = gemini.get_stock_prediction_insight(live_data, prediction_result)
+        
+        # Get news analysis based on prediction type
+        news_analyzer = get_news_analyzer()
+        if prediction_type == 'intraday':
+            news_analysis = news_analyzer.analyze_intraday_news(
+                symbol=symbol,
+                company_name=stock.name,
+                current_price=prediction_result['current_price'],
+                predicted_price=prediction_result['predicted_price']
+            )
+        else:  # long_term
+            news_analysis = news_analyzer.analyze_longterm_news(
+                symbol=symbol,
+                company_name=stock.name,
+                current_price=prediction_result['current_price'],
+                predicted_price=prediction_result['predicted_price'],
+                days_ahead=prediction_period
+            )
         
         # Calculate investment details if provided (for both intraday and longterm)
         investment_details = None
@@ -141,6 +156,9 @@ def predict_stock(symbol):
                 period_details['required_change_percent'] = required_change
                 period_details['predicted_change_percent'] = predicted_change
         
+        # Get sentiment score from prediction result if available (enhanced model includes it)
+        final_sentiment = prediction_result.get('sentiment_score', 0.0)
+        
         response_data = {
             'predicted_price': prediction_result['predicted_price'],
             'current_price': prediction_result['current_price'],
@@ -150,11 +168,20 @@ def predict_stock(symbol):
             'trend': prediction_result['trend'],
             'recommendation': prediction_result['recommendation'],
             'risk_percentage': prediction_result['risk_percentage'],
-            'sentiment_score': sentiment_score,
+            'sentiment_score': final_sentiment,
             'ai_insight': ai_insight,
+            'news_analysis': news_analysis,
+            'model_type': 'hybrid_ai_si_ml',  # New hybrid model
             'model_version': stock.model_version,
             'prediction_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'prediction_type': prediction_type
+            'prediction_type': prediction_type,
+            
+            # Hybrid prediction details
+            'ml_prediction': prediction_result.get('ml_prediction'),
+            'ai_prediction': prediction_result.get('ai_prediction'),
+            'dividend_analysis': prediction_result.get('dividend_analysis'),
+            'si_formula': prediction_result.get('si_formula'),
+            'hybrid_details': prediction_result.get('hybrid_details')
         }
         
         # Add type-specific details

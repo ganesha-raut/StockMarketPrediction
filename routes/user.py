@@ -3,7 +3,6 @@ from flask_login import login_required, current_user
 from models import db, Stock, Watchlist, Notification, NotificationSetting, HistoricalData
 from utils.stock_data import get_google_stock_data, check_market_status, get_stock_news
 from utils.gemini_ai import get_gemini
-from utils.ml_model import load_or_create_model
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time

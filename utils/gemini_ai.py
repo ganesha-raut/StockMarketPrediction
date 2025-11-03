@@ -7,15 +7,15 @@ class GeminiAI:
     
     def __init__(self, api_key=None):
         self.api_key = api_key
-        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent"
+        self.base_url = "https://backend.buildpicoapps.com/aero/run/llm-api?pk=v1-Z0FBQUFBQm5HUEtMSjJkakVjcF9IQ0M0VFhRQ0FmSnNDSHNYTlJSblE0UXo1Q3RBcjFPcl9YYy1OZUhteDZWekxHdWRLM1M1alNZTkJMWEhNOWd4S1NPSDBTWC12M0U2UGc9PQ=="
     
     def _generate_content(self, prompt):
         """Generate content using Gemini REST API"""
-        if not self.api_key:
-            return None
+        # if not self.api_key:
+        #     return None
         
         try:
-            url = f"{self.base_url}?key={self.api_key}"
+            url = f"{self.base_url}"
             headers = {'Content-Type': 'application/json'}
             data = {
                 "contents": [{
@@ -185,29 +185,118 @@ class GeminiAI:
             return {"sentiment": "neutral", "score": 0.0, "confidence": 50.0}
     
     def get_stock_prediction_insight(self, stock_data, prediction_data):
-        """Get AI insight on stock prediction"""
+        """Get AI insight on stock prediction with Markdown formatting"""
         try:
+            # Fallback if no API key
             if not self.api_key:
-                return "Prediction analysis unavailable."
+                return self._generate_fallback_insight(stock_data, prediction_data)
             
+            # Enhanced prompt for better insights
             prompt = f"""
-            Provide a brief investment insight (max 100 words) based on this stock prediction:
+            You are a professional stock market analyst. Provide investment insight in Markdown format.
             
-            Stock: {stock_data.get('name')} ({stock_data.get('symbol')})
-            Current Price: ₹{stock_data.get('live_price')}
-            Predicted Price: ₹{prediction_data.get('predicted_price')}
-            Confidence: {prediction_data.get('confidence')}%
-            Trend: {prediction_data.get('trend')}
+            **Stock Analysis:**
+            - Company: {stock_data.get('name', 'N/A')} ({stock_data.get('symbol', 'N/A')})
+            - Current Price: ₹{stock_data.get('live_price', 0):.2f}
+            - Predicted Price: ₹{prediction_data.get('predicted_price', 0):.2f}
+            - Expected Change: {prediction_data.get('percent_change', 0):+.2f}%
+            - Confidence Level: {prediction_data.get('confidence', 0):.1f}%
+            - Trend: {prediction_data.get('trend', 'neutral').upper()}
+            - Recommendation: {prediction_data.get('recommendation', 'HOLD')}
+            - Risk Level: {prediction_data.get('risk_percentage', 0):.1f}%
             
-            Give actionable advice with appropriate risk warnings.
+            Provide a concise analysis (100-150 words) in Markdown format with:
+            1. **Market Outlook** - Brief trend analysis
+            2. **Investment Recommendation** - Clear buy/sell/hold advice
+            3. **Risk Factors** - Key risks to consider
+            4. **Action Points** - 2-3 specific actions
+            
+            Use Markdown formatting: **bold**, *italic*, bullet points.
+            Include appropriate emojis for visual appeal.
+            End with a disclaimer about market risks.
             """
             
             text = self._generate_content(prompt)
-            return text if text else "Unable to generate insight at this time."
+            
+            if text:
+                # Clean up the response
+                text = text.strip()
+                # Remove markdown code blocks if present
+                if text.startswith('```'):
+                    text = text.split('```')[1]
+                    if text.startswith('markdown'):
+                        text = text[8:]
+                    text = text.strip()
+                return text
+            else:
+                return self._generate_fallback_insight(stock_data, prediction_data)
             
         except Exception as e:
             print(f"Error getting prediction insight: {e}")
-            return "Unable to generate insight at this time."
+            return self._generate_fallback_insight(stock_data, prediction_data)
+    
+    def _generate_fallback_insight(self, stock_data, prediction_data):
+        """Generate fallback insight when AI is unavailable"""
+        try:
+            symbol = stock_data.get('symbol', 'Stock')
+            current = stock_data.get('live_price', 0)
+            predicted = prediction_data.get('predicted_price', 0)
+            change = prediction_data.get('percent_change', 0)
+            trend = prediction_data.get('trend', 'neutral')
+            recommendation = prediction_data.get('recommendation', 'HOLD')
+            confidence = prediction_data.get('confidence', 0)
+            risk = prediction_data.get('risk_percentage', 0)
+            
+            # Determine sentiment
+            if change > 2:
+                outlook = "📈 **Strong Bullish Outlook**"
+                advice = "Consider buying with proper position sizing"
+            elif change > 0:
+                outlook = "📊 **Moderately Bullish**"
+                advice = "Suitable for gradual accumulation"
+            elif change < -2:
+                outlook = "📉 **Bearish Trend**"
+                advice = "Consider reducing exposure or avoiding"
+            elif change < 0:
+                outlook = "📊 **Slightly Bearish**"
+                advice = "Exercise caution, wait for better entry"
+            else:
+                outlook = "➡️ **Neutral Stance**"
+                advice = "Hold current positions, monitor closely"
+            
+            # Risk assessment
+            if risk > 70:
+                risk_text = "🔴 **High Risk** - Volatile conditions expected"
+            elif risk > 40:
+                risk_text = "🟡 **Moderate Risk** - Normal market volatility"
+            else:
+                risk_text = "🟢 **Lower Risk** - Relatively stable movement"
+            
+            insight = f"""
+### {outlook}
+
+**Market Analysis for {symbol}:**
+The AI model predicts a **{change:+.2f}%** movement from ₹{current:.2f} to ₹{predicted:.2f} with {confidence:.0f}% confidence.
+
+**Investment Recommendation:** *{recommendation}*
+{advice}. The current trend is **{trend}**, suggesting {"upward momentum" if change > 0 else "downward pressure" if change < 0 else "sideways movement"}.
+
+**Risk Assessment:**
+{risk_text}
+
+**Action Points:**
+- {'✅ Consider entry positions' if change > 1 else '⚠️ Wait for confirmation' if change > -1 else '❌ Avoid new positions'}
+- 📊 Monitor price action at key levels
+- 🎯 Set stop-loss at {(current * 0.95):.2f} (5% below current)
+
+---
+*⚠️ Disclaimer: This is an AI-generated analysis for educational purposes. Always conduct your own research and consult financial advisors before making investment decisions.*
+"""
+            return insight.strip()
+            
+        except Exception as e:
+            print(f"Error generating fallback insight: {e}")
+            return "**Analysis Unavailable** - Please try again later."
     
     def analyze_news_batch(self, news_items):
         """Analyze sentiment of multiple news items"""
