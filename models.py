@@ -116,16 +116,23 @@ class Prediction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     stock_id = db.Column(db.Integer, db.ForeignKey('stocks.id'), nullable=False)
     prediction_date = db.Column(db.Date, nullable=False)
+    target_date = db.Column(db.Date)  # Date for which prediction is made
     predicted_price = db.Column(db.Float, nullable=False)
-    actual_price = db.Column(db.Float)
+    current_price = db.Column(db.Float)  # Price at prediction time
+    actual_price = db.Column(db.Float)  # Actual closing price
     confidence = db.Column(db.Float)
     trend = db.Column(db.String(20))  # 'bullish', 'bearish', 'neutral'
-    prediction_type = db.Column(db.String(20))  # 'intraday', 'long_term'
+    prediction_type = db.Column(db.String(20))  # 'intraday', 'long_term', 'intraday_adaptive'
     
     # Additional metrics
     risk_percentage = db.Column(db.Float)
     sentiment_score = db.Column(db.Float)
     recommendation = db.Column(db.String(20))  # 'BUY', 'SELL', 'HOLD'
+    
+    # Adaptive learning fields
+    algorithm_used = db.Column(db.String(50))  # Algorithm name
+    accuracy_percentage = db.Column(db.Float)  # Calculated accuracy
+    checked_at = db.Column(db.DateTime)  # When accuracy was checked
     
     model_version = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

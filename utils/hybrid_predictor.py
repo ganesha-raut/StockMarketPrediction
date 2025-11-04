@@ -6,7 +6,7 @@ Combines Gemini AI, Syntactic Intelligence, and Machine Learning for superior pr
 import numpy as np
 import pandas as pd
 import yfinance as yf
-import google.generativeai as genai
+import requests
 from config import Config
 import logging
 from datetime import datetime, timedelta
@@ -25,14 +25,9 @@ class HybridPredictor:
     def __init__(self, symbol, company_name):
         self.symbol = symbol
         self.company_name = company_name
-        self.api_key = Config.GEMINI_API_KEY
-        
-        if self.api_key:
-            genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-2.5-flash')  # Using Flash 2.5
-        else:
-            self.model = None
-            logger.warning("Gemini API key not configured")
+        # Use REST API endpoint
+        self.api_url = "https://backend.buildpicoapps.com/aero/run/llm-api?pk=v1-Z0FBQUFBQm5HUEtMSjJkakVjcF9IQ0M0VFhRQ0FmSnNDSHNYTlJSblE0UXo1Q3RBcjFPcl9YYy1OZUhteDZWekxHdWRLM1M1alNZTkJMWEhNOWd4S1NPSDBTWC12M0U2UGc9PQ=="
+        self.timeout = 10
     
     def fetch_comprehensive_data(self, years=5):
         """Fetch comprehensive historical data including dividends"""
@@ -301,9 +296,6 @@ class HybridPredictor:
     def ai_news_analysis(self, current_price, ml_prediction, days_ahead):
         """Use Gemini AI to analyze news and predict future events"""
         
-        if not self.model:
-            return self._fallback_ai_analysis(current_price, ml_prediction, days_ahead)
-        
         try:
             months = days_ahead // 30
             
@@ -322,8 +314,20 @@ SUMMARY: [One sentence about overall outlook]
 Be brief and direct.
 """
             
-            response = self.model.generate_content(prompt)
-            text = response.text.strip()
+            # Call REST API
+            headers = {'Content-Type': 'application/json'}
+            data = {
+                "prompt": prompt
+            }
+            
+            response = requests.post(self.api_url, headers=headers, json=data, timeout=self.timeout)
+            
+            if response.status_code != 200:
+                logger.error(f"API error: {response.status_code}")
+                return self._fallback_ai_analysis(current_price, ml_prediction, days_ahead)
+            
+            result = response.json()
+            text = (result.get('text') or result.get('response') or result.get('output') or '').strip()
             
             # Parse AI response
             ai_data = self._parse_ai_response(text)

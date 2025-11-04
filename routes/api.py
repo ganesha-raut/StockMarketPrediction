@@ -6,6 +6,12 @@ from utils.enhanced_ml_model_lite import load_or_create_enhanced_model, get_enha
 from utils.gemini_ai import get_gemini
 from utils.news_analyzer import get_news_analyzer
 from utils.hybrid_predictor import get_hybrid_predictor
+from utils.intraday_ml_model import get_intraday_model
+from utils.unified_predictor import get_unified_predictor
+from utils.realistic_predictor import get_realistic_predictor
+from utils.advanced_ml_predictor import get_advanced_predictor
+from utils.ai_stock_recommender import get_ai_recommender
+from utils.ai_summary_generator import get_ai_summary
 from datetime import datetime, timedelta
 import pandas as pd
 import os
@@ -28,36 +34,21 @@ def predict_stock(symbol):
         prediction_type = data.get('type', 'intraday')  # 'intraday' or 'long_term'
         prediction_period = int(data.get('period', 7)) if data.get('period') else 7  # Number of days
         
-        # Get recent historical data - Enhanced model needs more data for features
-        recent_data = HistoricalData.query.filter_by(
-            stock_id=stock.id
-        ).order_by(HistoricalData.date.desc()).limit(300).all()
+        # Use ADVANCED ML PREDICTOR with enhanced news analysis
+        # Features: Live data + Enhanced news (categorized) + 32 technical indicators
         
-        if len(recent_data) < 50:
-            return jsonify({'success': False, 'message': 'Insufficient historical data. Please ensure stock data is updated.'}), 400
-        
-        # Convert to DataFrame - Enhanced model needs different column names
-        df = pd.DataFrame([{
-            'Date': d.date,
-            'Open': d.open_price,
-            'High': d.high_price,
-            'Low': d.low_price,
-            'Close': d.close_price,
-            'Volume': d.volume
-        } for d in reversed(recent_data)])
-        
-        # Initialize variables
-        sentiment_score = 0.0
-        gemini = get_gemini()
-        
-        # Use HYBRID AI + SI + ML Predictor for superior predictions
-        hybrid_predictor = get_hybrid_predictor(stock.symbol, stock.name)
-        
-        # Get hybrid prediction (combines AI, SI, and ML)
-        prediction_result = hybrid_predictor.hybrid_predict(days_ahead=prediction_period)
+        advanced_predictor = get_advanced_predictor(stock.symbol, stock.name)
+        prediction_result = advanced_predictor.predict(days_ahead=prediction_period)
         
         if not prediction_result or not prediction_result.get('success', False):
             return jsonify({'success': False, 'message': prediction_result.get('error', 'Prediction failed')}), 500
+        
+        # Format for compatibility
+        prediction_result['model_type'] = 'advanced_ml_enhanced_news'
+        
+        # Initialize variables
+        sentiment_score = prediction_result.get('news_sentiment', {}).get('sentiment_score', 0.0) if 'news_sentiment' in prediction_result else 0.0
+        gemini = get_gemini()
         
         # Get live data
         live_data = get_google_stock_data(symbol)
@@ -79,11 +70,11 @@ def predict_stock(symbol):
         db.session.commit()
         
         # Get AI insight with news analysis
-        ai_insight = ""
+        # ai_insight = ""
         news_analysis = ""
         
-        if gemini and live_data:
-            ai_insight = gemini.get_stock_prediction_insight(live_data, prediction_result)
+        # if gemini and live_data:
+        #     ai_insight = gemini.get_stock_prediction_insight(live_data, prediction_result)
         
         # Get news analysis based on prediction type
         news_analyzer = get_news_analyzer()
@@ -169,19 +160,26 @@ def predict_stock(symbol):
             'recommendation': prediction_result['recommendation'],
             'risk_percentage': prediction_result['risk_percentage'],
             'sentiment_score': final_sentiment,
-            'ai_insight': ai_insight,
+            # 'ai_insight': ai_insight,
             'news_analysis': news_analysis,
-            'model_type': 'hybrid_ai_si_ml',  # New hybrid model
+            'model_type': prediction_result.get('model_type', 'hybrid_ai_si_ml'),
             'model_version': stock.model_version,
             'prediction_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'prediction_type': prediction_type,
+            'days_ahead': prediction_period,
             
-            # Hybrid prediction details
+            # Model-specific details
             'ml_prediction': prediction_result.get('ml_prediction'),
             'ai_prediction': prediction_result.get('ai_prediction'),
             'dividend_analysis': prediction_result.get('dividend_analysis'),
             'si_formula': prediction_result.get('si_formula'),
-            'hybrid_details': prediction_result.get('hybrid_details')
+            'hybrid_details': prediction_result.get('hybrid_details'),
+            
+            # Intraday model details (if applicable)
+            'live_data': prediction_result.get('live_data'),
+            'news_sentiment': prediction_result.get('news_sentiment'),
+            'technical_indicators': prediction_result.get('technical_indicators'),
+            'model_predictions': prediction_result.get('model_predictions')
         }
         
         # Add type-specific details
@@ -395,4 +393,52 @@ def get_stock_chart_data(symbol):
         
     except Exception as e:
         print(f"Error fetching chart data: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@api_bp.route('/ai-recommendations', methods=['GET'])
+@login_required
+def get_ai_stock_recommendations():
+    """Get AI-powered stock recommendations based on today's predictions"""
+    try:
+        recommender = get_ai_recommender()
+        recommendations = recommender.get_recommendations()
+        
+        return jsonify(recommendations)
+        
+    except Exception as e:
+        print(f"Error getting AI recommendations: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@api_bp.route('/top-picks', methods=['GET'])
+@login_required
+def get_top_stock_picks():
+    """Get top stock picks (quick view)"""
+    try:
+        limit = int(request.args.get('limit', 5))
+        
+        recommender = get_ai_recommender()
+        top_picks = recommender.get_top_picks(limit=limit)
+        
+        return jsonify(top_picks)
+        
+    except Exception as e:
+        print(f"Error getting top picks: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@api_bp.route('/ai-summary/<symbol>', methods=['GET'])
+@login_required
+def get_stock_ai_summary(symbol):
+    """Get AI summary for stock prediction page"""
+    try:
+        stock = Stock.query.filter_by(symbol=symbol).first()
+        
+        if not stock:
+            return jsonify({'success': False, 'message': 'Stock not found'}), 404
+        
+        summary = get_ai_summary(stock.symbol, stock.name)
+        
+        return jsonify(summary)
+        
+    except Exception as e:
+        print(f"Error getting AI summary: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500

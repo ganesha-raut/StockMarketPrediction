@@ -5,23 +5,18 @@ Fetches and analyzes latest news for stock predictions
 
 import requests
 from datetime import datetime, timedelta
-import google.generativeai as genai
 from config import Config
 import logging
 
 logger = logging.getLogger(__name__)
 
 class NewsAnalyzer:
-    """Analyze stock news using Gemini AI"""
+    """Analyze stock news using Gemini AI REST API"""
     
     def __init__(self):
-        self.api_key = Config.GEMINI_API_KEY
-        if self.api_key:
-            genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-2.5-flash')  # Using Flash 2.0
-        else:
-            self.model = None
-            logger.warning("Gemini API key not configured")
+        # Use REST API endpoint
+        self.api_url = "https://backend.buildpicoapps.com/aero/run/llm-api?pk=v1-Z0FBQUFBQm5HUEtMSjJkakVjcF9IQ0M0VFhRQ0FmSnNDSHNYTlJSblE0UXo1Q3RBcjFPcl9YYy1OZUhteDZWekxHdWRLM1M1alNZTkJMWEhNOWd4S1NPSDBTWC12M0U2UGc9PQ=="
+        self.timeout = 10
     
     def fetch_latest_news(self, symbol, company_name, days=7):
         """Fetch latest news for a stock"""
@@ -56,9 +51,6 @@ class NewsAnalyzer:
     
     def analyze_intraday_news(self, symbol, company_name, current_price, predicted_price):
         """Analyze news for intraday prediction with Syntactic Intelligence"""
-        
-        if not self.model:
-            return self._generate_fallback_intraday_analysis(symbol, company_name, current_price, predicted_price)
         
         try:
             # Fetch latest news
@@ -125,8 +117,21 @@ Using Syntactic Intelligence (SI), analyze:
 Keep it concise (max 200 words). Use emojis for visual appeal.
 """
             
-            response = self.model.generate_content(prompt)
-            return response.text.strip()
+            # Call REST API
+            headers = {'Content-Type': 'application/json'}
+            data = {
+                "prompt": prompt
+            }
+            
+            response = requests.post(self.api_url, headers=headers, json=data, timeout=self.timeout)
+            
+            if response.status_code == 200:
+                result = response.json()
+                text = result.get('text') or result.get('response') or result.get('output')
+                if text:
+                    return text.strip()
+            
+            return self._generate_fallback_intraday_analysis(symbol, company_name, current_price, predicted_price)
             
         except Exception as e:
             logger.error(f"Error in intraday news analysis: {e}")
@@ -134,9 +139,6 @@ Keep it concise (max 200 words). Use emojis for visual appeal.
     
     def analyze_longterm_news(self, symbol, company_name, current_price, predicted_price, days_ahead):
         """Analyze news for long-term prediction with future outlook"""
-        
-        if not self.model:
-            return self._generate_fallback_longterm_analysis(symbol, company_name, current_price, predicted_price, days_ahead)
         
         try:
             # Fetch recent news
@@ -231,8 +233,21 @@ Provide comprehensive long-term analysis:
 Use emojis and keep it informative but concise (max 400 words).
 """
             
-            response = self.model.generate_content(prompt)
-            return response.text.strip()
+            # Call REST API
+            headers = {'Content-Type': 'application/json'}
+            data = {
+                "prompt": prompt
+            }
+            
+            response = requests.post(self.api_url, headers=headers, json=data, timeout=self.timeout)
+            
+            if response.status_code == 200:
+                result = response.json()
+                text = result.get('text') or result.get('response') or result.get('output')
+                if text:
+                    return text.strip()
+            
+            return self._generate_fallback_longterm_analysis(symbol, company_name, current_price, predicted_price, days_ahead)
             
         except Exception as e:
             logger.error(f"Error in long-term news analysis: {e}")

@@ -337,6 +337,7 @@ function checkMarketForIntraday() {
     $.get('/user/api/market-status', function(response) {
         if (response.success) {
             marketOpen = response.data.is_open;
+            // marketOpen = true
             
             if (marketOpen) {
                 checkDiv.html(`

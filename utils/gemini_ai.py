@@ -18,17 +18,17 @@ class GeminiAI:
             url = f"{self.base_url}"
             headers = {'Content-Type': 'application/json'}
             data = {
-                "contents": [{
-                    "parts": [{"text": prompt}]
-                }]
+                "prompt": prompt
             }
             
             response = requests.post(url, headers=headers, json=data, timeout=10)
             
             if response.status_code == 200:
                 result = response.json()
-                if 'candidates' in result and len(result['candidates']) > 0:
-                    return result['candidates'][0]['content']['parts'][0]['text']
+                # Handle different response formats
+                text = result.get('text') or result.get('response') or result.get('output')
+                if text:
+                    return text
             else:
                 print(f"Gemini API error: {response.status_code} - {response.text}")
             

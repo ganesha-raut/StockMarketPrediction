@@ -1,0 +1,70 @@
+/**
+ * AI Summary Styles for Prediction Page
+ */
+
+#ai-summary-container {
+    margin: 20px 0;
+}
+
+.ai-summary-content {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #333;
+}
+
+.summary-point {
+    margin: 15px 0;
+    padding: 10px;
+    background: #f8f9fa;
+    border-left: 4px solid #007bff;
+    border-radius: 4px;
+}
+
+.summary-point strong {
+    color: #007bff;
+    font-size: 16px;
+}
+
+.summary-subpoint {
+    margin: 8px 0 8px 20px;
+    padding: 8px 12px;
+    background: #ffffff;
+    border-left: 3px solid #6c757d;
+    border-radius: 3px;
+    color: #555;
+    font-size: 14px;
+}
+
+.card-header h5 i {
+    margin-right: 8px;
+}
+
+.card-header small {
+    display: block;
+    margin-top: 5px;
+    opacity: 0.9;
+    font-size: 12px;
+}
+
+/* Loading animation */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .ai-summary-content {
+        font-size: 14px;
+    }
+    
+    .summary-point {
+        padding: 8px;
+    }
+    
+    .summary-subpoint {
+        margin-left: 15px;
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+}
