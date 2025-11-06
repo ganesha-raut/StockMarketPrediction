@@ -1,0 +1,3059 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradePro - Professional Trading Platform</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --tertiary: #334155;
+            --accent: #06b6d4;
+            --accent-secondary: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --light-text: #f1f5f9;
+            --muted-text: #cbd5e1;
+            --border-color: #334155;
+        }
+
+        body.light-mode {
+            --primary: #ffffff;
+            --secondary: #f8fafc;
+            --tertiary: #e2e8f0;
+            --accent: #0891b2;
+            --accent-secondary: #d97706;
+            --light-text: #1e293b;
+            --muted-text: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--primary);
+            color: var(--light-text);
+            transition: background 0.3s ease, color 0.3s ease;
+            min-height: 100vh;
+        }
+
+        /* New sidebar layout instead of page sections */
+        .layout-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: var(--secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+        }
+
+        .sidebar-brand {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-section {
+            margin-bottom: 30px;
+        }
+
+        .nav-section-title {
+            font-size: 12px;
+            color: var(--muted-text);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--muted-text);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--tertiary);
+            color: var(--accent);
+        }
+
+        .nav-item.active {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--accent);
+            border-left-color: var(--accent);
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: var(--secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 400px;
+            margin: 0 30px;
+        }
+
+        .search-box input {
+            background: var(--tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--light-text);
+            padding: 10px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+        }
+
+        .top-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .theme-toggle {
+            background: var(--tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--accent);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .theme-toggle:hover {
+            background: var(--accent);
+            color: var(--primary);
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .page-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .page-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(6, 182, 212, 0.15);
+        }
+
+        .card-header {
+            background: var(--tertiary);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--accent);
+            font-weight: 600;
+            padding: 16px;
+        }
+
+        .card-body {
+            color: var(--light-text);
+        }
+
+        /* AI Suggestions Grid */
+        .ai-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        /* CHANGE: Improved grid layout to ensure all stocks display */
+        .stock-suggestion-card {
+            background: var(--secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            min-height: fit-content;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stock-symbol {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stock-name {
+            font-size: 12px;
+            color: var(--muted-text);
+            margin-top: 4px;
+        }
+
+        .stock-price {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 16px 0 8px;
+        }
+
+        .price-change {
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .price-positive {
+            color: var(--success);
+        }
+
+        .price-negative {
+            color: var(--danger);
+        }
+
+        .trend-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .trend-bullish {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .trend-bearish {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        /* Watchlist Grid */
+        .watchlist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 24px;
+        }
+
+        /* Enhanced watchlist card with notification and like buttons */
+        /* CHANGE: Enhanced watchlist card structure for better display */
+        .watchlist-card {
+            background: var(--secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            min-height: fit-content;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .watchlist-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 12px 30px rgba(6, 182, 212, 0.15);
+        }
+
+        .watchlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 16px;
+        }
+
+        .watchlist-info h5 {
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .watchlist-info small {
+            color: var(--muted-text);
+        }
+
+        .watchlist-actions-top {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--muted-text);
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            padding: 6px 10px;
+        }
+
+        .action-btn:hover {
+            color: var(--accent);
+            transform: scale(1.15);
+        }
+
+        .action-btn.liked {
+            color: var(--danger);
+        }
+
+        .action-btn.notified {
+            color: var(--accent);
+        }
+
+        .watchlist-price {
+            margin: 16px 0;
+        }
+
+        .watchlist-price h4 {
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .watchlist-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .btn {
+            transition: all 0.3s ease;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0891b2;
+            transform: translateY(-2px);
+        }
+
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        /* Buttons */
+        .btn-outline-danger {
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .btn-outline-danger:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Forms */
+        .form-control,
+        .form-select {
+            background: var(--tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--light-text);
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background: var(--tertiary);
+            border-color: var(--accent);
+            color: var(--light-text);
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+        }
+
+        .form-label {
+            color: var(--muted-text);
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        /* Profile Avatar */
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: #ffffff;
+            margin: 0 auto 20px;
+        }
+
+        .profile-stat {
+            background: var(--tertiary);
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .profile-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .profile-stat-label {
+            font-size: 12px;
+            color: var(--muted-text);
+            margin-top: 8px;
+            text-transform: uppercase;
+        }
+
+        /* Modal */
+        .modal-content {
+            background: var(--secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+            background: var(--tertiary);
+        }
+
+        .modal-title {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .btn-close {
+            filter: brightness(0.8);
+        }
+
+        .alert {
+            border: none;
+            border-radius: 8px;
+        }
+
+        .alert-info {
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--accent);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+
+        .spinner-border {
+            color: var(--accent) !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 240px;
+            }
+
+            .main-content {
+                margin-left: 240px;
+            }
+
+            /* CHANGE: Adjusted grid columns for medium screens */
+            .ai-grid {
+                grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            }
+
+            .watchlist-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .layout-wrapper {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: 16px;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .content-area {
+                padding: 16px;
+            }
+
+            /* CHANGE: Single column on mobile for better visibility */
+            .ai-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .watchlist-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-box {
+                display: none;
+            }
+        }
+
+        .market-open {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .market-closed {
+            /* background: rgba(239, 68, 68, 0.1); */
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+        }
+
+        .market-status {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="layout-wrapper">
+        <!-- New sidebar layout -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <i class="fas fa-chart-line"></i>TradePro
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Main</div>
+                <a class="nav-item active" onclick="showSection('home'); return false;" data-section="home">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Trading</div>
+                <a class="nav-item" onclick="showSection('watchlist'); return false;" data-section="watchlist">
+                    <i class="fas fa-star"></i>
+                    <span>Watchlist</span>
+                    <span class="nav-badge" id="watchlistCount">0</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Account</div>
+                <a class="nav-item" onclick="showSection('notifications'); return false;" data-section="notifications">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                    <span class="nav-badge" id="notificationCount">0</span>
+                </a>
+                <a class="nav-item" onclick="showSection('profile'); return false;" data-section="profile">
+                    <i class="fas fa-user"></i>
+                    <span>Profile</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <div class="page-title">
+                        <span id="pageTitle">Dashboard</span>
+                    </div>
+                    <div class="welcome-message">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Hello, {{ current_user.username }}</span>
+                    </div>
+                </div>
+
+                <div class="top-bar-right">
+                    <div class="market-status market-closed" id="marketStatus">
+                        <i class="fas fa-circle me-1"></i>Checking...
+                    </div>
+                    <div class="top-bar-actions">
+                        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
+                            <div class="theme-toggle-icon">
+                                <i class="fas fa-sun sun-icon"></i>
+                                <i class="fas fa-moon moon-icon"></i>
+                            </div>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="handleLogout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <style>
+                /* Navigation Badge Styles */
+                .nav-badge {
+                    background: var(--accent);
+                    color: white;
+                    border-radius: 12px;
+                    padding: 2px 8px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    position: absolute;
+                    right: 16px;
+                    min-width: 20px;
+                    height: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.3s ease;
+                }
+
+                .nav-badge:empty {
+                    display: none;
+                }
+
+                .nav-item {
+                    position: relative;
+                }
+
+                .nav-item:hover .nav-badge {
+                    transform: scale(1.1);
+                }
+
+                .top-bar {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 1.2rem 2.5rem;
+                    background: linear-gradient(to right, var(--primary), var(--secondary));
+                    border-bottom: 1px solid var(--border-color);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                    position: relative;
+                    z-index: 100;
+                    backdrop-filter: blur(10px);
+                }
+
+                body.light-mode .top-bar {
+                    background: linear-gradient(to right, #ffffff, #f8fafc);
+                }
+
+                .top-bar-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 2.5rem;
+                }
+
+                .page-title {
+                    font-size: 26px;
+                    font-weight: 800;
+                    background: linear-gradient(45deg, var(--accent), var(--accent-secondary));
+                    background-clip: text;
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    letter-spacing: -0.5px;
+                }
+
+                .welcome-message {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.8rem;
+                    font-size: 16px;
+                    color: var(--light-text);
+                    padding: 0.7rem 1.5rem;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 30px;
+                    backdrop-filter: blur(8px);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    transition: all 0.3s ease;
+                }
+
+                body.light-mode .welcome-message {
+                    background: rgba(0, 0, 0, 0.05);
+                    border: 1px solid rgba(0, 0, 0, 0.1);
+                    color: var(--primary);
+                }
+
+                .welcome-message:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+
+                .welcome-message i {
+                    font-size: 20px;
+                    color: var(--accent);
+                }
+
+                .top-bar-right {
+                    display: flex;
+                    align-items: center;
+                    gap: 2rem;
+                }
+
+                .top-bar-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: 1.2rem;
+                }
+
+                .market-status {
+                    padding: 0.7rem 1.5rem;
+                    border-radius: 30px;
+                    font-weight: 600;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.7rem;
+                    transition: all 0.3s ease;
+                    text-transform: uppercase;
+                    font-size: 0.85rem;
+                    letter-spacing: 0.5px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }
+
+                .market-open {
+                    background: linear-gradient(45deg, var(--success), tranferent);
+                    color: green;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                }
+
+                .market-open:hover {
+                    color: white;
+                    background: linear-gradient(45deg, #059669, #047857);
+                }
+
+                .market-closed {
+                    background: linear-gradient(45deg, var(--danger), tranferent);
+                    color: red;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                }
+
+                .market-closed:hover {
+                    color: white;
+                    background: linear-gradient(45deg, #dc2626, #b91c1c);
+                }
+
+                .market-status i {
+                    font-size: 0.75rem;
+                }
+
+                body.light-mode .market-status {
+                    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+                }
+
+                .top-bar .btn-outline-danger {
+                    background: rgba(239, 68, 68, 0.1);
+                    border: 1px solid rgba(239, 68, 68, 0.2);
+                    color: var(--danger);
+                    padding: 0.7rem 1.5rem;
+                    font-weight: 600;
+                    transition: all 0.3s ease;
+                    text-transform: uppercase;
+                    font-size: 0.85rem;
+                    letter-spacing: 0.5px;
+                }
+
+                .top-bar .btn-outline-danger:hover {
+                    background: var(--danger);
+                    color: white;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+                }
+
+                body.light-mode .top-bar .btn-outline-danger {
+                    background: rgba(239, 68, 68, 0.05);
+                }
+
+                .theme-toggle {
+                    background: rgba(255, 255, 255, 0.1);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    padding: 0.8rem;
+                    border-radius: 50%;
+                    cursor: pointer;
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                    position: relative;
+                    overflow: hidden;
+                    width: 44px;
+                    height: 44px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    backdrop-filter: blur(8px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+
+                body.light-mode .theme-toggle {
+                    background: rgba(0, 0, 0, 0.05);
+                    border: 1px solid rgba(0, 0, 0, 0.1);
+                }
+
+                .theme-toggle:hover {
+                    transform: scale(1.1) rotate(8deg);
+                    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+                }
+
+                .theme-toggle-icon {
+                    position: relative;
+                    width: 24px;
+                    height: 24px;
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+
+                .theme-toggle:active {
+                    transform: scale(0.95);
+                }
+
+                .theme-toggle-icon i {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.5s ease;
+                }
+
+                .sun-icon {
+                    color: #ffd43b;
+                    transform: translateY(0) rotate(0deg);
+                    opacity: 0;
+                }
+
+                .moon-icon {
+                    color: #7289da;
+                    transform: translateY(0) rotate(0deg);
+                    opacity: 1;
+                }
+
+                body.light-mode .sun-icon {
+                    transform: translateY(0) rotate(180deg);
+                    opacity: 1;
+                }
+
+                body.light-mode .moon-icon {
+                    transform: translateY(100%) rotate(-180deg);
+                    opacity: 0;
+                }
+
+                body:not(.light-mode) .sun-icon {
+                    transform: translateY(-100%) rotate(-180deg);
+                }
+
+                body:not(.light-mode) .moon-icon {
+                    transform: translateY(0) rotate(0deg);
+                }
+
+                .btn-outline-danger {
+                    border-radius: 20px;
+                    padding: 0.5rem 1.2rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    transition: all 0.3s ease;
+                }
+            </style>
+
+            <!-- Content Area -->
+            <div class="content-area">
+
+                <!-- Home Section -->
+                <section id="home" class="page-section active">
+                    <div class="mb-5">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h3 style="margin: 0; font-weight: 700;">
+                                    <i class="fas fa-robot" style="color: var(--warning)"></i> AI Suggested Stocks
+                                </h3>
+                                <p style="color: var(--muted-text); margin: 4px 0 0 0; font-size: 14px;">Recommended
+                                    picks from our AI analysis</p>
+                            </div>
+                            <button class="btn btn-sm btn-primary" onclick="refreshSuggestions()">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh
+                            </button>
+                        </div>
+                        <div class="ai-grid" id="aiSuggestions">
+                            <div class="text-center py-5">
+                                <div class="spinner-border"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <section>
+                        <div class="stocks-header mb-4">
+                            <div class="stocks-header-top">
+                                <h3><i class="fas fa-chart-bar text-success me-2"></i>All Stocks</h3>
+                                <div class="stocks-search">
+                                    <i class="fas fa-search search-icon"></i>
+                                    <input type="text" id="stockSearch"
+                                        placeholder="Search stocks by name or symbol...">
+                                </div>
+                            </div>
+                            <div class="stocks-filters">
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-outline-secondary active" onclick="filterStocks('all')">
+                                        <i class="fas fa-globe me-1"></i>All
+                                    </button>
+                                    <button class="btn btn-outline-success" onclick="filterStocks('bullish')">
+                                        <i class="fas fa-arrow-trend-up me-1"></i>Bullish
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="filterStocks('bearish')">
+                                        <i class="fas fa-arrow-trend-down me-1"></i>Bearish
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <style>
+                            .stocks-header {
+                                background: var(--card-bg);
+                                padding: 1.5rem;
+                                border-radius: 12px;
+                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                            }
+
+                            .stocks-header-top {
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                margin-bottom: 1rem;
+                            }
+
+                            .stocks-search {
+                                position: relative;
+                                width: 400px;
+                            }
+
+                            .search-icon {
+                                position: absolute;
+                                left: 1rem;
+                                top: 50%;
+                                transform: translateY(-50%);
+                                color: var(--muted-text);
+                            }
+
+                            .stocks-search input {
+                                width: 100%;
+                                padding: 0.8rem 1rem 0.8rem 2.5rem;
+                                border: 1px solid var(--border-color);
+                                border-radius: 25px;
+                                background: var(--input-bg);
+                                color: var(--text);
+                                font-size: 0.95rem;
+                                transition: all 0.3s ease;
+                            }
+
+                            .stocks-search input:focus {
+                                outline: none;
+                                border-color: var(--accent);
+                                box-shadow: 0 0 0 3px var(--accent-transparent);
+                            }
+
+                            .stocks-filters {
+                                display: flex;
+                                justify-content: center;
+                            }
+
+                            .stocks-filters .btn-group {
+                                background: var(--card-bg);
+                                padding: 0.5rem;
+                                border-radius: 25px;
+                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                            }
+
+                            .stocks-filters .btn {
+                                border-radius: 20px;
+                                padding: 0.5rem 1.2rem;
+                                font-weight: 500;
+                                display: flex;
+                                align-items: center;
+                                gap: 0.5rem;
+                            }
+
+                            .stocks-filters .btn.active {
+                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                            }
+                        </style>
+
+                        <div id="allStocks">
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </section>
+
+                <!-- Watchlist Section -->
+                <section id="watchlist" class="page-section">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h2 style="margin: 0; font-weight: 700;">
+                                <i class="fas fa-star" style="color: var(--warning)"></i> My Watchlist
+                            </h2>
+                            <p style="color: var(--muted-text); margin: 4px 0 0 0; font-size: 14px;">Tracked stocks and
+                                AI predictions</p>
+                        </div>
+                        <button class="btn btn-sm btn-primary" onclick="refreshWatchlist()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
+                    </div>
+                    <div class="watchlist-container">
+                        <div class="watchlist-grid" id="watchlistContent">
+                            <div class="text-center py-5">
+                                <div class="spinner-border"></div>
+                            </div>
+                        </div>
+                        <div id="emptyWatchlist" class="text-center py-5" style="display: none;">
+                            <i class="fas fa-star fa-3x mb-3" style="color: var(--warning-transparent)"></i>
+                            <h4>Your Watchlist is Empty</h4>
+                            <p class="text-muted">Start adding stocks you want to track!</p>
+                        </div>
+                    </div>
+
+                    <style>
+                        .watchlist-container {
+                            position: relative;
+                            min-height: 200px;
+                        }
+
+                        .watchlist-grid {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                            gap: 1.5rem;
+                            margin-top: 1rem;
+                        }
+
+                        .watchlist-card {
+                            background: var(--card-bg);
+                            border-radius: 12px;
+                            padding: 1.5rem;
+                            border: 1px solid var(--border-color);
+                            transition: all 0.3s ease;
+                            position: relative;
+                            overflow: hidden;
+                        }
+
+                        .watchlist-card:hover {
+                            transform: translateY(-4px);
+                            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+                            border-color: var(--accent-transparent);
+                        }
+
+                        .watchlist-card::before {
+                            content: '';
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 4px;
+                            background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+                            opacity: 0;
+                            transition: opacity 0.3s ease;
+                        }
+
+                        .watchlist-card:hover::before {
+                            opacity: 1;
+                        }
+
+                        .stock-header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-start;
+                            margin-bottom: 1rem;
+                        }
+
+                        .stock-info h4 {
+                            margin: 0;
+                            font-weight: 700;
+                            font-size: 1.25rem;
+                        }
+
+                        .stock-symbol {
+                            color: var(--muted-text);
+                            font-size: 0.9rem;
+                            margin-top: 0.25rem;
+                        }
+
+                        .stock-actions {
+                            display: flex;
+                            gap: 0.75rem;
+                        }
+
+                        .action-btn {
+                            background: none;
+                            border: none;
+                            padding: 0.5rem;
+                            border-radius: 50%;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            color: var(--text);
+                        }
+
+                        .like-btn {
+                            color: var(--danger);
+                        }
+
+                        .like-btn.active {
+                            background: var(--danger-transparent);
+                            transform: scale(1.1);
+                        }
+
+                        .notify-btn {
+                            color: var(--warning);
+                        }
+
+                        .notify-btn.active {
+                            background: var(--warning-transparent);
+                            transform: scale(1.1);
+                        }
+
+                        .stock-price {
+                            font-size: 1.5rem;
+                            font-weight: 700;
+                            margin: 1rem 0;
+                        }
+
+                        .price-change {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            padding: 0.5rem 1rem;
+                            border-radius: 20px;
+                            font-weight: 600;
+                            font-size: 0.9rem;
+                        }
+
+                        .price-change.positive {
+                            background: var(--success-transparent);
+                            color: var(--success);
+                        }
+
+                        .price-change.negative {
+                            background: var(--danger-transparent);
+                            color: var(--danger);
+                        }
+
+                        .stock-prediction {
+                            margin-top: 1rem;
+                            padding: 1rem;
+                            border-radius: 8px;
+                            background: var(--card-bg-secondary);
+                            border: 1px solid var(--border-color);
+                        }
+
+                        .prediction-label {
+                            font-size: 0.9rem;
+                            color: var(--muted-text);
+                            margin-bottom: 0.5rem;
+                        }
+
+                        .prediction-value {
+                            font-weight: 600;
+                            color: var(--success);
+                        }
+
+                        .prediction-accuracy {
+                            font-size: 0.85rem;
+                            color: var(--muted-text);
+                            margin-top: 0.25rem;
+                        }
+
+                        .stock-metrics {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            margin: 1rem 0;
+                        }
+
+                        .current-price {
+                            display: flex;
+                            flex-direction: column;
+                        }
+
+                        .current-price .label {
+                            font-size: 0.85rem;
+                            color: var(--muted-text);
+                        }
+
+                        .current-price .value {
+                            font-size: 1.5rem;
+                            font-weight: 700;
+                            background: linear-gradient(45deg, var(--accent), var(--accent-secondary));
+                            background-clip: text;
+                            -webkit-background-clip: text;
+                            -webkit-text-fill-color: transparent;
+                        }
+
+                        .prediction-header {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            color: var(--accent);
+                            margin-bottom: 0.5rem;
+                        }
+
+                        .prediction-content {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                        }
+
+                        .accuracy-bar {
+                            width: 100px;
+                            height: 4px;
+                            background: var(--border-color);
+                            border-radius: 2px;
+                            overflow: hidden;
+                            margin-right: 0.5rem;
+                        }
+
+                        .accuracy-fill {
+                            height: 100%;
+                            width: var(--accuracy);
+                            background: linear-gradient(90deg, var(--success), var(--accent));
+                            transition: width 1s ease-in-out;
+                        }
+
+                        .stock-analytics {
+                            display: flex;
+                            gap: 1rem;
+                            margin-top: 1rem;
+                            padding-top: 1rem;
+                            border-top: 1px solid var(--border-color);
+                        }
+
+                        .analytics-item {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            font-size: 0.9rem;
+                            color: var(--muted-text);
+                        }
+
+                        .analytics-item.positive {
+                            color: var(--success);
+                        }
+
+                        .analytics-item.negative {
+                            color: var(--danger);
+                        }
+
+                        .watchlist-card:hover .action-btn {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+
+                        .action-btn {
+                            opacity: 0.7;
+                            transform: translateY(4px);
+                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        }
+                    </style>
+                    <!-- Notification Settings Modal -->
+                    <div class="modal fade" id="notificationModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">
+                                        <i class="fas fa-bell me-2"></i>Notification Settings
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <input type="hidden" id="notifStockId">
+                                    <h6 id="notifStockName" class="mb-3"></h6>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Target Price (₹)</label>
+                                        <input type="number" class="form-control" id="targetPrice" step="0.01">
+                                        <small class="">Get notified when price reaches this target</small>
+                                    </div>
+
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" class="form-check-input" id="emailEnabled">
+                                        <label class="form-check-label" for="emailEnabled">
+                                            Enable Email Notifications
+                                        </label>
+                                    </div>
+
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" class="form-check-input" id="notifyOnPrediction">
+                                        <label class="form-check-label" for="notifyOnPrediction">
+                                            Notify on AI Predictions
+                                        </label>
+                                    </div>
+
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" class="form-check-input" id="notifyOnDrop">
+                                        <label class="form-check-label" for="notifyOnDrop">
+                                            Notify on Large Drops
+                                        </label>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Drop Threshold (%)</label>
+                                        <input type="number" class="form-control" id="dropThreshold" value="5"
+                                            step="0.5">
+                                        <small class="">Alert when price drops by this percentage</small>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                    <button type="button" class="btn btn-primary" onclick="saveNotificationSettings()">
+                                        <i class="fas fa-save me-1"></i>Save Settings
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Notifications Section -->
+                <section id="notifications" class="page-section">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h2 style="margin: 0; font-weight: 700;">
+                                <i class="fas fa-bell" style="color: var(--accent)"></i> Notifications
+                            </h2>
+                            <p style="color: var(--muted-text); margin: 4px 0 0 0; font-size: 14px;">Price alerts and AI
+                                signals</p>
+                        </div>
+                        <button class="btn btn-sm btn-primary" onclick="markAllAsRead()">
+                            <i class="fas fa-check-double me-1"></i>Mark All Read
+                        </button>
+                    </div>
+                    <div id="notificationsContent">
+                        <div class="text-center py-5">
+                            <div class="spinner-border"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Profile Section -->
+                <section id="profile" class="page-section">
+                    <h2 style="margin: 0 0 24px 0; font-weight: 700;">
+                        <i class="fas fa-user-circle" style="color: var(--accent)"></i> My Profile
+                    </h2>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <div class="profile-avatar">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <h4>{{ current_user.username }}</h4>
+                                    <p>{{ current_user.email }}</p>
+                                    <div class="mt-4">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Status:</span>
+                                            <span class="badge bg-success">Active</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Verified:</span>
+                                            <span
+                                                class="badge bg-{{ 'success' if current_user.is_verified else 'warning' }}">
+                                                {{ 'Yes' if current_user.is_verified else 'No' }}
+                                            </span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Member Since:</span>
+                                            <span>{{ current_user.created_at.strftime('%b %Y') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-8">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Update Profile</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="profileForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">Username</label>
+                                            <input type="text" class="form-control" id="username">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Email</label>
+                                            <input type="email" class="form-control" id="email">
+                                        </div>
+
+
+
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-1"></i>Save Changes
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Change Password</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="passwordForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">Current Password</label>
+                                            <input type="password" class="form-control" id="currentPassword" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">New Password</label>
+                                            <input type="password" class="form-control" id="newPassword" minlength="6"
+                                                required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Confirm Password</label>
+                                            <input type="password" class="form-control" id="confirmPassword"
+                                                minlength="6" required>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="fas fa-key me-1"></i>Change Password
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Buy Modal -->
+    <div class="modal fade" id="buyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-arrow-up text-success me-2"></i>Buy Stock</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="buyStockId">
+                    <h6 id="buyStockName" class="mb-3"></h6>
+
+                    <div class="mb-3">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="buyQuantity" min="1" value="1">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Order Type</label>
+                        <select class="form-select" id="buyOrderType">
+                            <option value="market">Market Order</option>
+                            <option value="limit">Limit Order</option>
+                            <option value="stop">Stop Order</option>
+                        </select>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>Order Summary:</strong>
+                        <div>Quantity: <span id="buySummaryQty">0</span></div>
+                        <div>Price: <span id="buySummaryPrice">₹0</span></div>
+                        <div>Commission (0.1%): <span id="buySummaryCommission">₹0</span></div>
+                        <div class="fw-bold">Total: <span id="buySummaryTotal">₹0</span></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="confirmBuyOrder()">
+                        <i class="fas fa-check me-1"></i>Confirm Buy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sell Modal -->
+    <div class="modal fade" id="sellModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-arrow-down text-danger me-2"></i>Sell Stock</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="sellStockId">
+                    <h6 id="sellStockName" class="mb-3"></h6>
+
+                    <div class="mb-3">
+                        <label class="form-label">Available Shares</label>
+                        <input type="number" class="form-control" id="sellAvailable" disabled>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="sellQuantity" min="1" value="1">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Order Type</label>
+                        <select class="form-select" id="sellOrderType">
+                            <option value="market">Market Order</option>
+                            <option value="limit">Limit Order</option>
+                        </select>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>Order Summary:</strong>
+                        <div>Quantity: <span id="sellSummaryQty">0</span></div>
+                        <div>Price: <span id="sellSummaryPrice">₹0</span></div>
+                        <div>Commission (0.1%): <span id="sellSummaryCommission">₹0</span></div>
+                        <div class="fw-bold">Total Proceeds: <span id="sellSummaryTotal">₹0</span></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmSellOrder()">
+                        <i class="fas fa-check me-1"></i>Confirm Sell
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+    <script>
+        let likedStocks = JSON.parse(localStorage.getItem('likedStocks')) || [];
+        let notificationStocks = JSON.parse(localStorage.getItem('notificationStocks')) || [];
+        let marketOpen = false;
+
+        // Function to handle like button click with animation
+        function handleLikeClick(stockId, stockName) {
+            const likeBtn = document.querySelector(`#like-${stockId}`);
+            const heartIcon = likeBtn.querySelector('i');
+
+            if (!likeBtn.classList.contains('active')) {
+                // Add to watchlist
+                likeBtn.classList.add('active');
+                heartIcon.classList.remove('far');
+                heartIcon.classList.add('fas', 'heartbeat');
+
+                // Animate the heart
+                setTimeout(() => heartIcon.classList.remove('heartbeat'), 1000);
+
+                if (!likedStocks.includes(stockId)) {
+                    likedStocks.push(stockId);
+                    showToast(`${stockName} added to watchlist`, 'success');
+                }
+            } else {
+                // Remove from watchlist
+                likeBtn.classList.remove('active');
+                heartIcon.classList.remove('fas', 'heartbeat');
+                heartIcon.classList.add('far');
+
+                const index = likedStocks.indexOf(stockId);
+                if (index > -1) {
+                    likedStocks.splice(index, 1);
+                    showToast(`${stockName} removed from watchlist`, 'info');
+                }
+            }
+
+            localStorage.setItem('likedStocks', JSON.stringify(likedStocks));
+            updateWatchlistCount();
+            refreshWatchlist(); // Refresh the watchlist section
+        }
+
+        // Function to handle notification button click
+        function handleNotifyClick(stockId, stockName) {
+            const notifyBtn = document.querySelector(`#notify-${stockId}`);
+            const bellIcon = notifyBtn.querySelector('i');
+
+            if (!notifyBtn.classList.contains('active')) {
+                notifyBtn.classList.add('active');
+                bellIcon.classList.remove('far');
+                bellIcon.classList.add('fas', 'ring');
+
+                // Animate the bell
+                setTimeout(() => bellIcon.classList.remove('ring'), 1000);
+
+                if (!notificationStocks.includes(stockId)) {
+                    notificationStocks.push(stockId);
+                }
+
+                // Open notification settings modal
+                openNotificationSettings(stockId, stockName);
+            } else {
+                notifyBtn.classList.remove('active');
+                bellIcon.classList.remove('fas', 'ring');
+                bellIcon.classList.add('far');
+
+                const index = notificationStocks.indexOf(stockId);
+                if (index > -1) {
+                    notificationStocks.splice(index, 1);
+                    showToast(`Notifications disabled for ${stockName}`, 'info');
+                }
+            }
+
+            localStorage.setItem('notificationStocks', JSON.stringify(notificationStocks));
+        }
+
+        // Function to open notification settings
+        function openNotificationSettings(stockId, stockName) {
+            const modal = new bootstrap.Modal(document.getElementById('notificationModal'));
+            document.getElementById('notifStockId').value = stockId;
+            document.getElementById('notifStockName').textContent = stockName;
+
+            // Load existing settings if any
+            const settings = JSON.parse(localStorage.getItem(`notifSettings_${stockId}`)) || {
+                targetPrice: '',
+                emailEnabled: true,
+                notifyOnPrediction: true,
+                notifyOnDrop: false,
+                dropThreshold: 5
+            };
+
+            document.getElementById('targetPrice').value = settings.targetPrice;
+            document.getElementById('emailEnabled').checked = settings.emailEnabled;
+            document.getElementById('notifyOnPrediction').checked = settings.notifyOnPrediction;
+            document.getElementById('notifyOnDrop').checked = settings.notifyOnDrop;
+            document.getElementById('dropThreshold').value = settings.dropThreshold;
+
+            modal.show();
+        }
+
+        // Function to save notification settings
+        function saveNotificationSettings() {
+            const stockId = document.getElementById('notifStockId').value;
+            const settings = {
+                targetPrice: document.getElementById('targetPrice').value,
+                emailEnabled: document.getElementById('emailEnabled').checked,
+                notifyOnPrediction: document.getElementById('notifyOnPrediction').checked,
+                notifyOnDrop: document.getElementById('notifyOnDrop').checked,
+                dropThreshold: document.getElementById('dropThreshold').value
+            };
+
+            localStorage.setItem(`notifSettings_${stockId}`, JSON.stringify(settings));
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('notificationModal'));
+            modal.hide();
+
+            showToast('Notification settings saved successfully', 'success');
+        }
+
+        // Function to show toast messages with animation
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast-notification toast-${type}`;
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            });
+        }
+
+        // Add animation styles
+        const animationStyles = document.createElement('style');
+        animationStyles.textContent = `
+            @keyframes heartbeat {
+                0% { transform: scale(1); }
+                25% { transform: scale(1.3); }
+                50% { transform: scale(1); }
+                75% { transform: scale(1.3); }
+                100% { transform: scale(1); }
+            }
+
+            @keyframes ring {
+                0% { transform: rotate(0); }
+                10% { transform: rotate(30deg); }
+                20% { transform: rotate(-28deg); }
+                30% { transform: rotate(34deg); }
+                40% { transform: rotate(-32deg); }
+                50% { transform: rotate(30deg); }
+                60% { transform: rotate(-28deg); }
+                70% { transform: rotate(34deg); }
+                80% { transform: rotate(-32deg); }
+                90% { transform: rotate(30deg); }
+                100% { transform: rotate(0); }
+            }
+
+            .heartbeat {
+                animation: heartbeat 1s ease-in-out;
+            }
+
+            .ring {
+                animation: ring 1s ease-in-out;
+            }
+
+            .action-btn {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.2rem;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+                overflow: hidden;
+                background: var(--card-bg-secondary);
+                border: 1px solid var(--border-color);
+            }
+
+            .action-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }
+
+            .action-btn:active {
+                transform: translateY(0);
+            }
+
+            .action-btn.active {
+                transform: scale(1.1);
+            }
+
+            .like-btn.active {
+                background: var(--danger-transparent);
+                border-color: var(--danger);
+            }
+
+            .notify-btn.active {
+                background: var(--warning-transparent);
+                border-color: var(--warning);
+            }
+
+            .toast-notification {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                background: var(--card-bg);
+                color: var(--text);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                transform: translateY(100px);
+                opacity: 0;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 9999;
+            }
+
+            .toast-notification.show {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        `;
+        document.head.appendChild(animationStyles);
+
+        // Function to toggle like status
+        function toggleLike(stockId) {
+            const likeBtn = document.querySelector(`#like-${stockId}`);
+            const index = likedStocks.indexOf(stockId);
+
+            if (index === -1) {
+                // Add to liked stocks
+                likedStocks.push(stockId);
+                likeBtn.classList.add('active');
+                showToast('Added to favorites!', 'success');
+            } else {
+                // Remove from liked stocks
+                likedStocks.splice(index, 1);
+                likeBtn.classList.remove('active');
+                showToast('Removed from favorites', 'info');
+            }
+
+            localStorage.setItem('likedStocks', JSON.stringify(likedStocks));
+            updateWatchlistCount();
+        }
+
+        // Function to toggle notification settings
+        function toggleNotification(stockId) {
+            const notifyBtn = document.querySelector(`#notify-${stockId}`);
+            const index = notificationStocks.indexOf(stockId);
+
+            if (index === -1) {
+                // Add to notification stocks
+                notificationStocks.push(stockId);
+                notifyBtn.classList.add('active');
+                // Open notification settings modal
+                openNotificationSettings(stockId);
+            } else {
+                // Remove from notification stocks
+                notificationStocks.splice(index, 1);
+                notifyBtn.classList.remove('active');
+                showToast('Notifications disabled', 'info');
+            }
+
+            localStorage.setItem('notificationStocks', JSON.stringify(notificationStocks));
+        }
+
+        // Function to show toast messages
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast-notification toast-${type}`;
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Function to update watchlist count
+        function updateWatchlistCount() {
+            const count = likedStocks.length;
+            const badge = document.getElementById('watchlistCount');
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'flex' : 'none';
+        }
+
+        // Style for toast notifications
+        const style = document.createElement('style');
+        style.textContent = `
+            .toast-notification {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                background: var(--card-bg);
+                color: var(--text);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                transform: translateY(100px);
+                opacity: 0;
+                transition: all 0.3s ease;
+                z-index: 9999;
+            }
+
+            .toast-notification.show {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            .toast-notification i {
+                font-size: 1.25rem;
+            }
+
+            .toast-success i {
+                color: var(--success);
+            }
+
+            .toast-info i {
+                color: var(--info);
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Profile Update Function
+        async function updateProfile(event) {
+            event.preventDefault();
+
+            // Get form elements
+            const usernameInput = document.getElementById('username');
+            const emailInput = document.getElementById('email');
+            const alertDiv = document.getElementById('profileUpdateAlert');
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            const spinner = document.getElementById('profileUpdateSpinner');
+
+            // Reset previous error states
+            usernameInput.classList.remove('is-invalid');
+            emailInput.classList.remove('is-invalid');
+            document.getElementById('username-error').textContent = '';
+            document.getElementById('email-error').textContent = '';
+            alertDiv.style.display = 'none';
+
+            // Show spinner
+            submitButton.disabled = true;
+            spinner.style.display = 'inline-block';
+
+            try {
+                const response = await fetch('/user/api/profile/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: usernameInput.value.trim(),
+                        email: emailInput.value.trim()
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Update successful
+                    showAlert('Profile updated successfully!', 'success');
+
+                    // Update the display name in the header
+                    document.querySelector('.welcome-message span').textContent =
+                        `Hello, ${usernameInput.value.trim()}`;
+                } else {
+                    // Handle validation errors
+                    if (data.errors) {
+                        if (data.errors.username) {
+                            usernameInput.classList.add('is-invalid');
+                            document.getElementById('username-error').textContent = data.errors.username;
+                        }
+                        if (data.errors.email) {
+                            emailInput.classList.add('is-invalid');
+                            document.getElementById('email-error').textContent = data.errors.email;
+                        }
+                    }
+                    showAlert(data.message || 'Failed to update profile', 'danger');
+                }
+            } catch (error) {
+                console.error('Profile update error:', error);
+                showAlert('An error occurred while updating your profile', 'danger');
+            } finally {
+                // Hide spinner and re-enable button
+                submitButton.disabled = false;
+                spinner.style.display = 'none';
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('profileUpdateAlert');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertDiv.style.display = 'block';
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    alertDiv.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // Profile update functionality
+        function updateProfile(event) {
+            event.preventDefault();
+
+            const username = $('#username').val().trim();
+            const email = $('#email').val().trim();
+            const alertDiv = $('#profileUpdateAlert');
+
+            // Basic validation
+            if (!username || !email) {
+                showProfileAlert('Please fill in all fields', 'danger');
+                return;
+            }
+
+            // Email validation
+            if (!isValidEmail(email)) {
+                showProfileAlert('Please enter a valid email address', 'danger');
+                return;
+            }
+
+            // Send update request
+            $.ajax({
+                url: '/user/api/profile/update',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    username: username,
+                    email: email
+                }),
+                success: function (response) {
+                    if (response.success) {
+                        showProfileAlert('Profile updated successfully!', 'success');
+                        // Update the display name in the top bar
+                        $('.welcome-message span').text('Hello, ' + username);
+                    } else {
+                        showProfileAlert(response.message || 'Update failed', 'danger');
+                    }
+                },
+                error: function (xhr) {
+                    const message = xhr.responseJSON?.message || 'Failed to update profile';
+                    showProfileAlert(message, 'danger');
+                }
+            });
+        }
+
+        function showProfileAlert(message, type) {
+            const alertDiv = $('#profileUpdateAlert');
+            alertDiv.removeClass().addClass(`alert alert-${type}`).html(message).show();
+
+            // Hide the alert after 5 seconds for success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    alertDiv.fadeOut();
+                }, 5000);
+            }
+        }
+
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        // Load profile data
+        function loadProfileData() {
+            // Current user data is already available in the template
+            // Just ensure the form fields are populated
+            $('#username').val('{{ current_user.username }}');
+            $('#email').val('{{ current_user.email }}');
+        }
+
+
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('light-mode');
+            localStorage.setItem('theme', isDark ? 'light'  : 'dark');
+
+            // Add animation class
+            const button = document.querySelector('.theme-toggle');
+            button.classList.add('theme-switching');
+
+            // Remove animation class after transition
+            setTimeout(() => {
+                button.classList.remove('theme-switching');
+            }, 500);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const theme = localStorage.getItem('theme') || 'dark';
+            if (theme === 'light') {
+                document.body.classList.add('light-mode');
+                document.querySelector('.theme-toggle i').className = 'fas fa-sun';
+            }
+        });
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
+
+            const titles = {
+                'home': 'Dashboard',
+                'watchlist': 'My Watchlist',
+                'notifications': 'Notifications',
+                'profile': 'My Profile'
+            };
+            document.getElementById('pageTitle').textContent = titles[sectionId];
+
+            if (sectionId === 'home') {
+                loadMarketStatus();
+                loadAISuggestions();
+                loadAllStocks();
+            } else if (sectionId === 'watchlist') {
+                loadWatchlist();
+            } else if (sectionId === 'notifications') {
+                loadNotifications();
+            } else if (sectionId === 'profile') {
+                loadProfileData();
+            }
+        }
+        let allStocksData = [];
+        let currentFilter = 'all';
+
+
+
+        // Load market status
+        function loadMarketStatus() {
+            $.get('/user/api/market-status', function (response) {
+                if (response.success) {
+                    const status = response.data;
+                    const statusDiv = $('#marketStatus');
+
+                    if (status.is_open) {
+                        statusDiv.html(`<i class="fas fa-circle text-success me-2"></i>Market Open`);
+                        statusDiv.removeClass('market-closed').addClass('market-open');
+                    } else {
+                        statusDiv.html(`<i class="fas fa-circle text-danger me-2"></i>Market Closed`);
+                        statusDiv.removeClass('market-open').addClass('market-closed');
+                    }
+                }
+            });
+        }
+        function loadAISuggestions() {
+            $.get('/user/api/ai-suggestions', function (response) {
+                if (response.success) {
+                    const suggestions = response.data;
+                    let html = '';
+                    // if (response.data && response.data.length > 0) {
+                    suggestions.forEach(stock => {
+                        const trendClass = stock.trend === 'bullish' ? 'trend-bullish' : 'trend-bearish';
+                        const priceClass = stock.change_price > 0 ? 'price-positive' : 'price-negative';
+
+                        html += `
+                            <div class="stock-suggestion-card">
+                                <div class="stock-header">
+                                    <div>
+                                        <div class="stock-symbol">${stock.symbol}</div>
+                                        <div class="stock-name">${stock.name}</div>
+                                    </div>
+                                    <span class="trend-badge ${trendClass}">${stock.trend.toUpperCase()}</span>
+                                </div>
+                                
+                                <div class="stock-price">₹${stock.live_price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                                <div class="price-change ${priceClass}">
+                                    <i class="fas fa-${stock.change_price > 0 ? 'arrow-up' : 'arrow-down'}"></i>
+                                    ${stock.percent_change.toFixed(2)}%
+                                </div>
+                                
+                                <p style="font-size: 13px; color: var(--muted-text); margin: 12px 0;">${stock.reason}</p>
+                                
+                                <div class="watchlist-actions" style="margin-top: auto;">
+                                    <button class="btn btn-success" onclick="openBuyModal(${stock.id}, '${stock.symbol}', ${stock.live_price})">
+                                        <i class="fas fa-arrow-up"></i>
+                                    </button>
+                                    <button class="btn btn-danger" onclick="openSellModal(${stock.id}, '${stock.symbol}', ${stock.live_price})">
+                                        <i class="fas fa-arrow-down"></i>
+                                    </button>
+                                    <button class="btn btn-primary" onclick="viewPrediction('${stock.symbol}')">
+                                        <i class="fas fa-chart-line"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    $('#aiSuggestions').html(html);
+                }
+            }).fail(function () {
+                $('#aiSuggestions').html('<div class="col-12 text-center text-danger">Failed to load AI suggestions</div>');
+            });
+        }
+
+        // Load all stocks
+        function loadAllStocks() {
+            $.get('/user/api/all-stocks', function (response) {
+                if (response.success) {
+                    allStocksData = response.data;
+                    renderStocks();
+                }
+            }).fail(function () {
+                $('#allStocks').html('<div class="text-center text-danger">Failed to load stocks</div>');
+            });
+        }
+
+        // Function to filter stocks based on trend
+        function filterStocks(filter) {
+            currentFilter = filter;
+
+            // Update button active states
+            document.querySelectorAll('[onclick="filterStocks"]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[onclick="filterStocks('${filter}')"]`).classList.add('active');
+
+            // Render the filtered stocks
+            renderStocks();
+        }
+
+        // Render stocks with filter
+        function renderStocks() {
+            let filtered = allStocksData;
+
+            if (currentFilter !== 'all') {
+                filtered = allStocksData.filter(s => s.trend === currentFilter);
+            }
+
+            let html = '<div class="row">';
+
+            filtered.forEach(stock => {
+                const trendClass = stock.trend === 'bullish' ? 'trend-bullish' :
+                    stock.trend === 'bearish' ? 'trend-bearish' : 'trend-neutral';
+                const priceClass = stock.change_price > 0 ? 'price-positive' : 'price-negative';
+                const watchlistIcon = stock.in_watchlist ? 'fas fa-star text-warning' : 'far fa-star';
+
+                html += `
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 stock-card">
+                    <div class="card-body p-4">
+                        <!-- Stock Header with Modern Layout -->
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stock-icon ${trendClass} me-3">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div>
+                                    <h4 class="mb-1 stock-symbol fw-bold">${stock.symbol}</h4>
+                                    <p class="mb-0 small">${stock.name}</p>
+                                </div>
+                            </div>
+                            <button class="btn watchlist-btn" onclick="toggleWatchlist(${stock.id}, this)">
+                                <i class="${watchlistIcon} fs-4"></i>
+                            </button>
+                        </div>
+
+                        <!-- Enhanced Price Display -->
+                        <div class="price-container mb-4">
+                            <div class="current-price">
+                                <h3 class="mb-2">₹${stock.live_price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h3>
+                                <div class="price-change ${priceClass}">
+                                    <i class="fas fa-${stock.change_price > 0 ? 'arrow-up' : 'arrow-down'} me-2"></i>
+                                    <span class="change-value">${stock.percent_change_formatted}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Improved Stats with Icons -->
+                        <div class="stats-container mb-4">
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-chart-bar text-primary"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <span class="stat-label">Day Range</span>
+                                    <span class="stat-value">${stock.day_range}</span>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-exchange-alt text-success"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <span class="stat-label">Volume</span>
+                                    <span class="stat-value">${stock.volume}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modern Action Buttons -->
+                        <div class="action-buttons">
+                            <button class="btn btn-success w-100 mb-2" onclick="openBuyModal(${stock.id}, '${stock.symbol}', ${stock.live_price})">
+                                <i class="fas fa-arrow-up me-2"></i>Buy Now
+                            </button>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-danger flex-grow-1" onclick="openSellModal(${stock.id}, '${stock.symbol}', ${stock.live_price})">
+                                    <i class="fas fa-arrow-down me-1"></i>Sell
+                                </button>
+                                <button class="btn btn-primary" onclick="viewPrediction('${stock.symbol}')">
+                                    <i class="fas fa-chart-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <style>
+                        .stock-icon {
+                            width: 45px;
+                            height: 45px;
+                            border-radius: 12px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 20px;
+                            color: white;
+                        }
+                        
+                        .trend-bullish.stock-icon {
+                            background: linear-gradient(135deg, #10b981, #059669);
+                        }
+                        
+                        .trend-bearish.stock-icon {
+                            background: linear-gradient(135deg, #ef4444, #dc2626);
+                        }
+
+                        .watchlist-btn {
+                            background: transparent;
+                            border: none;
+                            transition: transform 0.2s;
+                        }
+
+                        .watchlist-btn:hover {
+                            transform: scale(1.1);
+                        }
+
+                        .price-container {
+                            text-align: center;
+                            padding: 15px;
+                            background: var(--tertiary);
+                            border-radius: 12px;
+                        }
+
+                        .price-change {
+                            display: inline-block;
+                            padding: 5px 12px;
+                            border-radius: 20px;
+                            font-size: 14px;
+                            font-weight: 500;
+                        }
+
+                        .stats-container {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 15px;
+                        }
+
+                        .stat-item {
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            padding: 10px;
+                            background: var(--tertiary);
+                            border-radius: 8px;
+                        }
+
+                        .stat-icon {
+                            width: 35px;
+                            height: 35px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            background: var(--secondary);
+                            border-radius: 8px;
+                        }
+
+                        .stat-content {
+                            display: flex;
+                            flex-direction: column;
+                        }
+
+                        .stat-label {
+                            font-size: 12px;
+                            color: var(--muted-text);
+                        }
+
+                        .stat-value {
+                            font-weight: 600;
+                            font-size: 14px;
+                        }
+
+                        .action-buttons .btn {
+                            border-radius: 8px;
+                            padding: 10px 20px;
+                            font-weight: 500;
+                        }
+                    </style>
+                </div>
+            </div>
+        `;
+            });
+
+            html += '</div>';
+            $('#allStocks').html(html);
+        }
+        // Toggle watchlist
+        function toggleWatchlist(stockId, btn) {
+            const isInWatchlist = $(btn).find('i').hasClass('fas');
+            const url = isInWatchlist ? '/user/api/watchlist/remove' : '/user/api/watchlist/add';
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ stock_id: stockId }),
+                success: function (response) {
+                    if (response.success) {
+                        const icon = $(btn).find('i');
+                        if (isInWatchlist) {
+                            icon.removeClass('fas text-warning').addClass('far');
+                            showToast('Removed from watchlist', 'info');
+                        } else {
+                            icon.removeClass('far').addClass('fas text-warning');
+                            showToast('Added to watchlist', 'success');
+                        }
+                    }
+                },
+                error: function (xhr) {
+                    showToast(xhr.responseJSON.message || 'Operation failed', 'danger');
+                }
+            });
+        }
+
+        // Search functionality
+        $('#stockSearch').on('input', function () {
+            const query = $(this).val().toLowerCase().trim();
+
+            if (query.length === 0) {
+                loadAllStocks(); // Reset to original data
+                return;
+            }
+
+            // Filter stocks based on search query
+            const searchResults = allStocksData.filter(stock =>
+                stock.symbol.toLowerCase().includes(query) ||
+                stock.name.toLowerCase().includes(query)
+            );
+
+            // Temporarily update the display without modifying original data
+            const originalData = allStocksData;
+            allStocksData = searchResults;
+            renderStocks();
+            allStocksData = originalData;
+        });
+
+        // Function to update navigation badges
+        function updateNavBadges() {
+            // Update watchlist count
+            $.get('/user/api/watchlist', function (response) {
+                if (response.success) {
+                    const count = response.data.length;
+                    $('#watchlistCount').text(count > 0 ? count : '');
+                }
+            });
+
+            // Update notifications count
+            $.get('/user/api/notifications', function (response) {
+                if (response.success) {
+                    const unreadCount = response.data.filter(notif => !notif.is_read).length;
+                    $('#notificationCount').text(unreadCount > 0 ? unreadCount : '');
+                }
+            });
+        }
+
+        // Initialize
+        $(document).ready(function () {
+            loadMarketStatus();
+            loadAISuggestions();
+            loadAllStocks();
+            updateNavBadges();
+
+            // Update badges every 30 seconds
+            setInterval(updateNavBadges, 30000);
+        });
+        let watchlistData = [];
+
+        function loadWatchlist() {
+            $.get('/user/api/watchlist', function (response) {
+                if (response.success) {
+
+                    let html = '';
+                    watchlistData = response.data;
+                    if (response.data && response.data.length > 0) {
+                        response.data.forEach(stock => {
+                            const isLiked = likedStocks.includes(stock.id);
+                            const hasNotif = notificationStocks.includes(stock.id);
+                            const priceClass = stock.change_price > 0 ? 'price-positive' : 'price-negative';
+
+                            html += `
+                            <div class="watchlist-card">
+                                <div class="watchlist-header">
+                                    <div class="watchlist-info">
+                                        <h5>${stock.symbol}</h5>
+                                        <small>${stock.name}</small>
+                                    </div>
+                                    <div class="watchlist-actions-top">
+                                        
+                                        <button class="action-btn ${hasNotif ? 'notified' : ''}" onclick="openNotificationSettings(${stock.id}, '${stock.symbol}')">
+                                            <i class="fas fa-bell"></i>
+                                        </button>
+                                       
+                                    </div>
+                                </div>
+                                
+                                <div class="watchlist-price">
+                                    <h4>₹${stock.live_price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h4>
+                                    <small class="${priceClass}">
+                                        <i class="fas fa-${stock.change_price > 0 ? 'arrow-up' : 'arrow-down'}"></i>
+                                        ${stock.percent_change.toFixed(2)}%
+                                    </small>
+                                </div>
+                                
+                                <div class="watchlist-actions" style="margin-top: auto;">
+                                    <button class="btn btn-success" onclick="openBuyModal(${stock.id}, '${stock.symbol}', ${stock.live_price})">
+                                        <i class="fas fa-arrow-up"></i>
+                                    </button>
+                                    <button class="btn btn-danger" onclick="openSellModal(${stock.id}, '${stock.symbol}', ${stock.live_price})">
+                                        <i class="fas fa-arrow-down"></i>
+                                    </button>
+                                    <button class="btn btn-primary" onclick="viewPrediction('${stock.symbol}')">
+                                        <i class="fas fa-chart-line"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        });
+                    } else {
+                        html = `<div style="grid-column: 1/-1; text-align: center; padding: 60px 0;"><i class="fas fa-star" style="font-size: 48px; color: var(--muted-text); margin-bottom: 16px; display: block;"></i><h4>Your watchlist is empty</h4></div>`;
+                    }
+                    document.getElementById('watchlistContent').innerHTML = html;
+                }
+            });
+        }
+
+        function toggleLike(stockId) {
+            const idx = likedStocks.indexOf(stockId);
+            if (idx > -1) {
+                likedStocks.splice(idx, 1);
+            } else {
+                likedStocks.push(stockId);
+            }
+            localStorage.setItem('likedStocks', JSON.stringify(likedStocks));
+            loadWatchlist();
+            showToast('Like saved!', 'success');
+        }
+
+        function toggleNotification(stockId) {
+            const idx = notificationStocks.indexOf(stockId);
+            if (idx > -1) {
+                notificationStocks.splice(idx, 1);
+            } else {
+                notificationStocks.push(stockId);
+            }
+            localStorage.setItem('notificationStocks', JSON.stringify(notificationStocks));
+            loadWatchlist();
+            showToast(idx > -1 ? 'Notification disabled' : 'AI prediction notification enabled!', 'success');
+        }
+
+        function openNotificationSettings(stockId, symbol) {
+            $('#notifStockId').val(stockId);
+            $('#notifStockName').text(symbol);
+
+            // Load existing settings
+            const item = watchlistData.find(w => w.id === stockId);
+            if (item && item.has_notification) {
+                // Load existing settings if available
+                $('#targetPrice').val('');
+                $('#emailEnabled').prop('checked', item.notification_enabled);
+                $('#notifyOnPrediction').prop('checked', true);
+                $('#notifyOnDrop').prop('checked', true);
+                $('#dropThreshold').val(5);
+            } else {
+                // Default values
+                $('#targetPrice').val('');
+                $('#emailEnabled').prop('checked', true);
+                $('#notifyOnPrediction').prop('checked', true);
+                $('#notifyOnDrop').prop('checked', true);
+                $('#dropThreshold').val(5);
+            }
+
+            new bootstrap.Modal(document.getElementById('notificationModal')).show();
+        }
+
+        function saveNotificationSettings() {
+            const stockId = $('#notifStockId').val();
+            const data = {
+                stock_id: parseInt(stockId),
+                target_price: parseFloat($('#targetPrice').val()) || null,
+                email_enabled: $('#emailEnabled').is(':checked'),
+                notify_on_prediction: $('#notifyOnPrediction').is(':checked'),
+                notify_on_drop: $('#notifyOnDrop').is(':checked'),
+                drop_threshold: parseFloat($('#dropThreshold').val()) || 5
+            };
+
+            $.ajax({
+                url: '/user/api/notification/set',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (response) {
+                    if (response.success) {
+                        showToast('Notification settings saved', 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('notificationModal')).hide();
+                        loadWatchlist();
+                    }
+                },
+                error: function (xhr) {
+                    showToast(xhr.responseJSON?.message || 'Failed to save settings', 'danger');
+                }
+            });
+        }
+
+        function showToast(message, type = 'info') {
+            const bgColor = type === 'success' ? 'bg-success' :
+                type === 'danger' ? 'bg-danger' :
+                    type === 'warning' ? 'bg-warning' : 'bg-info';
+
+            const toast = $(`
+        <div class="toast align-items-center text-white ${bgColor} border-0" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `);
+
+            $('body').append(toast);
+            const bsToast = new bootstrap.Toast(toast[0]);
+            bsToast.show();
+
+            setTimeout(() => toast.remove(), 3000);
+        }
+        function loadNotifications() {
+            $.get('/user/api/notifications', function (response) {
+                if (response.success) {
+                    let html = '';
+                    if (response.data.length === 0) {
+                        html = `<div style="text-align: center; padding: 60px 0;"><i class="fas fa-bell-slash" style="font-size: 48px; color: var(--muted-text); margin-bottom: 16px; display: block;"></i><h4>No notifications</h4></div>`;
+                    } else {
+                        response.data.forEach(notif => {
+                            const bgColors = { 'BUY': 'bg-success', 'SELL': 'bg-danger', 'TARGET': 'bg-info', 'DROP': 'bg-warning' };
+                            const typeIcons = { 'BUY': 'arrow-up', 'SELL': 'arrow-down', 'TARGET': 'bullseye', 'DROP': 'exclamation' };
+                            const bgColor = bgColors[notif.notification_type] || 'bg-secondary';
+                            const icon = typeIcons[notif.notification_type] || 'bell';
+
+                            html += `
+                            <div class="card mb-3" style="cursor: pointer;" onclick="markAsRead(${notif.id})">
+                                <div class="card-body">
+                                    <div class="d-flex gap-3">
+                                        <div class="rounded-circle ${bgColor} text-white p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-${icon}"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">${notif.title}${!notif.is_read ? '<span class="badge bg-primary ms-2">New</span>' : ''}</h6>
+                                            <p class="mb-2 small">${notif.message}</p>
+                                            <small class="">${new Date(notif.created_at).toLocaleString()}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        });
+                    }
+                    document.getElementById('notificationsContent').innerHTML = html;
+                }
+            });
+        }
+
+        function markAsRead(notifId) {
+            $.ajax({
+                url: '/user/api/notification/mark-read',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ notification_id: notifId })
+            });
+        }
+
+        function markAllAsRead() {
+            $.ajax({
+                url: '/user/api/notifications/mark-all-read',
+                method: 'POST',
+                success: function () {
+                    showToast('All marked as read', 'success');
+                    loadNotifications();
+                }
+            });
+        }
+
+        function loadProfileData() {
+            $.get('/user/api/profile', function (response) {
+                if (response.success) {
+                    const user = response.data;
+                    document.getElementById('profileUsername').textContent = user.username;
+                    document.getElementById('profileEmail').textContent = user.email;
+                    document.getElementById('username').value = user.username;
+                    document.getElementById('email').value = user.email;
+
+                }
+            });
+        }
+
+        document.getElementById('profileForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+
+
+            $.ajax({
+                url: '/user/api/profile/update',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ username, email }),
+                success: function (response) {
+                    if (response.success) {
+                        showToast('Profile updated!', 'success');
+                        loadProfileData();
+                    }
+                },
+                error: function (xhr) {
+                    showToast(xhr.responseJSON?.message || 'Update failed', 'danger');
+                }
+            });
+        });
+
+        document.getElementById('passwordForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                showToast('Passwords do not match', 'danger');
+                return;
+            }
+
+            $.ajax({
+                url: '/user/api/profile/update',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    current_password: currentPassword,
+                    new_password: newPassword
+                }),
+                success: function (response) {
+                    if (response.success) {
+                        showToast('Password changed!', 'success');
+                        document.getElementById('passwordForm').reset();
+                    }
+                },
+                error: function (xhr) {
+                    showToast(xhr.responseJSON?.message || 'Change failed', 'danger');
+                }
+            });
+        });
+
+        function openBuyModal(stockId, symbol, price) {
+            document.getElementById('buyStockId').value = stockId;
+            document.getElementById('buyStockName').textContent = `${symbol} @ ₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+            document.getElementById('buyQuantity').value = 1;
+            document.getElementById('buyOrderType').value = 'market';
+            updateBuySummary(price);
+            new bootstrap.Modal(document.getElementById('buyModal')).show();
+        }
+
+        function openSellModal(stockId, symbol, price) {
+            document.getElementById('sellStockId').value = stockId;
+            document.getElementById('sellStockName').textContent = `${symbol} @ ₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+            document.getElementById('sellQuantity').value = 1;
+            document.getElementById('sellOrderType').value = 'market';
+            updateSellSummary(price);
+            new bootstrap.Modal(document.getElementById('sellModal')).show();
+        }
+
+        function updateBuySummary(price) {
+            const qty = parseFloat(document.getElementById('buyQuantity').value) || 0;
+            const total = qty * price;
+            const commission = total * 0.001;
+            const finalTotal = total + commission;
+
+            document.getElementById('buySummaryQty').textContent = qty;
+            document.getElementById('buySummaryPrice').textContent = `₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+            document.getElementById('buySummaryCommission').textContent = `₹${commission.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+            document.getElementById('buySummaryTotal').textContent = `₹${finalTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        }
+
+        function updateSellSummary(price) {
+            const qty = parseFloat(document.getElementById('sellQuantity').value) || 0;
+            const total = qty * price;
+            const commission = total * 0.001;
+            const finalTotal = total - commission;
+
+            document.getElementById('sellSummaryQty').textContent = qty;
+            document.getElementById('sellSummaryPrice').textContent = `₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+            document.getElementById('sellSummaryCommission').textContent = `₹${commission.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+            document.getElementById('sellSummaryTotal').textContent = `₹${finalTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        }
+
+        function confirmBuyOrder() {
+            const stockId = document.getElementById('buyStockId').value;
+            const quantity = document.getElementById('buyQuantity').value;
+            const orderType = document.getElementById('buyOrderType').value;
+
+            $.ajax({
+                url: '/user/api/buy-stock',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ stock_id: stockId, quantity, order_type: orderType }),
+                success: function (response) {
+                    if (response.success) {
+                        showToast('Buy order placed!', 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('buyModal')).hide();
+                    }
+                },
+                error: function (xhr) {
+                    showToast(xhr.responseJSON?.message || 'Buy order failed', 'danger');
+                }
+            });
+        }
+
+        function confirmSellOrder() {
+            const stockId = document.getElementById('sellStockId').value;
+            const quantity = document.getElementById('sellQuantity').value;
+            const orderType = document.getElementById('sellOrderType').value;
+
+            $.ajax({
+                url: '/user/api/sell-stock',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ stock_id: stockId, quantity, order_type: orderType }),
+                success: function (response) {
+                    if (response.success) {
+                        showToast('Sell order placed!', 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('sellModal')).hide();
+                    }
+                },
+                error: function (xhr) {
+                    showToast(xhr.responseJSON?.message || 'Sell order failed', 'danger');
+                }
+            });
+        }
+
+        function viewPrediction(symbol) {
+            window.location.href = `/user/prediction/${symbol}`;
+        }
+
+        function handleLogout() {
+            window.location.href = '/auth/logout';
+        }
+
+        function refreshSuggestions() {
+            document.getElementById('aiSuggestions').innerHTML = '<div style="text-align: center; padding: 60px 0;"><div class="spinner-border"></div></div>';
+            loadAISuggestions();
+        }
+
+        async function refreshWatchlist() {
+            const watchlistContent = document.getElementById('watchlistContent');
+            const emptyWatchlist = document.getElementById('emptyWatchlist');
+            const loadingSpinner = '<div class="text-center py-5"><div class="spinner-border"></div></div>';
+
+            watchlistContent.innerHTML = loadingSpinner;
+
+            try {
+                const response = await fetch('/api/watchlist');
+                const stocks = await response.json();
+
+                if (stocks.length === 0) {
+                    watchlistContent.style.display = 'none';
+                    emptyWatchlist.style.display = 'block';
+                    return;
+                }
+
+                watchlistContent.style.display = 'grid';
+                emptyWatchlist.style.display = 'none';
+
+                watchlistContent.innerHTML = stocks.map(stock => `
+            <div class="watchlist-card">
+                <div class="stock-header">
+                    <div class="stock-info">
+                        <h4>${stock.name}</h4>
+                        <div class="stock-symbol">${stock.symbol}</div>
+                    </div>
+                    <div class="stock-actions">
+                        <button class="action-btn like-btn ${likedStocks.includes(stock.id) ? 'active' : ''}" 
+                                id="like-${stock.id}" 
+                                onclick="toggleLike('${stock.id}')" 
+                                title="Add to favorites">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                        <button class="action-btn notify-btn ${notificationStocks.includes(stock.id) ? 'active' : ''}" 
+                                id="notify-${stock.id}" 
+                                onclick="toggleNotification('${stock.id}')" 
+                                title="Set notifications">
+                            <i class="fas fa-bell"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stock-price">₹${stock.price.toFixed(2)}</div>
+                
+                <div class="price-change ${stock.change >= 0 ? 'positive' : 'negative'}">
+                    <i class="fas fa-${stock.change >= 0 ? 'caret-up' : 'caret-down'}"></i>
+                    ${Math.abs(stock.change).toFixed(2)}%
+                </div>
+
+                <div class="stock-prediction">
+                    <div class="prediction-label">AI Prediction</div>
+                    <div class="prediction-value">₹${stock.prediction.toFixed(2)}</div>
+                    <div class="prediction-accuracy">
+                        <i class="fas fa-bullseye"></i> ${stock.accuracy}% accuracy
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+                updateWatchlistCount();
+            } catch (error) {
+                console.error('Error fetching watchlist:', error);
+                watchlistContent.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                Failed to load watchlist. Please try again later.
+            </div>
+        `;
+            }
+            document.getElementById('watchlistContent').innerHTML = '<div style="text-align: center; padding: 60px 0;"><div class="spinner-border"></div></div>';
+            loadWatchlist();
+        }
+
+        function showToast(message, type = 'info') {
+            const bgColor = type === 'success' ? 'bg-success' :
+                type === 'danger' ? 'bg-danger' :
+                    type === 'warning' ? 'bg-warning' : 'bg-info';
+
+            const toast = document.createElement('div');
+            toast.className = `alert ${bgColor} text-white position-fixed`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            toast.innerHTML = `<i class="fas fa-check-circle me-2"></i>${message}`;
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function setPriceAlert(stockId, symbol) {
+            const targetPrice = prompt(`Set price alert for ${symbol}. Enter target price:`);
+            if (targetPrice) {
+                $.ajax({
+                    url: '/user/api/set-price-alert',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ stock_id: stockId, target_price: targetPrice }),
+                    success: function (response) {
+                        if (response.success) {
+                            showToast(`Price alert set for ₹${targetPrice}`, 'success');
+                        }
+                    },
+                    error: function (xhr) {
+                        showToast(xhr.responseJSON?.message || 'Failed to set alert', 'danger');
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadAISuggestions();
+
+            document.getElementById('buyQuantity').addEventListener('input', function () {
+                const price = parseFloat(document.getElementById('buyStockName').textContent.split('₹')[1]) || 0;
+                updateBuySummary(price);
+            });
+
+            document.getElementById('sellQuantity').addEventListener('input', function () {
+                const price = parseFloat(document.getElementById('sellStockName').textContent.split('₹')[1]) || 0;
+                updateSellSummary(price);
+            });
+        });
+    </script>
+
+</body>
+
+</html>

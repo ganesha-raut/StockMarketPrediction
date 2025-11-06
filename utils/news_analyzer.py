@@ -97,8 +97,6 @@ Using Syntactic Intelligence (SI), analyze:
 
 **Output Format (Markdown):**
 
-### 📰 News Sentiment (SI Analysis)
-[Sentiment score and key findings]
 
 ### 📊 Intraday Trading Signal
 **Recommendation:** [BUY/SELL/HOLD]
@@ -147,7 +145,7 @@ Keep it concise (max 200 words). Use emojis for visual appeal.
             news_summary = "\n".join([f"- {item['title']}" for item in news[:10]])
             
             prompt = f"""
-You are a professional stock market analyst specializing in long-term investment analysis with Syntactic Intelligence (SI) and future trend prediction.
+You are a professional stock market analyst specializing in long-term investment analysis with and future trend prediction.
 
 **LONG-TERM ANALYSIS REQUEST**
 
@@ -180,11 +178,7 @@ Provide comprehensive long-term analysis:
    - Competitive advantages
    - Innovation pipeline
 
-4. **Syntactic Intelligence (SI) Insights**
-   - Pattern recognition in company communications
-   - Management sentiment analysis
-   - Strategic direction indicators
-   - Market positioning trends
+
 
 5. **Long-term Investment Recommendation**
    - BUY/HOLD/SELL with reasoning
@@ -211,8 +205,6 @@ Provide comprehensive long-term analysis:
 **Market Position:** [Analysis]
 **Innovation Score:** [X/10]
 
-### 🧠 SI Pattern Analysis
-[Key linguistic patterns and insights from company communications]
 
 ### 💰 Investment Recommendation
 **Action:** [BUY/HOLD/SELL]
@@ -268,7 +260,7 @@ Use emojis and keep it informative but concise (max 400 words).
             signal = "HOLD"
             sentiment = "➡️ Neutral"
         
-        return f"""### 📰 News Sentiment (SI Analysis)
+        return f"""### 📰 News Sentiment
 {sentiment} - AI model indicates {abs(change_pct):.2f}% movement expected today.
 
 ### 📊 Intraday Trading Signal
@@ -327,8 +319,7 @@ Recent market trends show {outlook.lower()} potential for {company_name}. AI ana
 **Market Position:** Strong fundamentals with AI-predicted {change_pct:+.2f}% growth
 **Innovation Score:** 7/10
 
-### 🧠 SI Pattern Analysis
-Syntactic Intelligence analysis shows consistent positive sentiment in company communications and market positioning.
+
 
 ### 💰 Investment Recommendation
 **Action:** {action}

@@ -9,13 +9,13 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URI') or 'sqlite:///stock_prediction.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # Mail settings
+    # Mail settings for watchlist alerts
     MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.gmail.com'
     MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'True').lower() == 'true'
-    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME') or 'rautganesh9370@gmail.com'
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD') or 'sqjd qggz vwee kybi'
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER') or 'rautganesh9370@gmail.com'
     
     # Gemini AI
     GEMINI_API_KEY = "AIzaSyAoEeyccPU7JRxoex8O0elzNJHxHN6IZMw"

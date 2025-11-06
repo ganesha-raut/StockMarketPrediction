@@ -40,7 +40,7 @@ class AdaptivePredictor:
             'lasso': Lasso(alpha=1.0),
             'elastic_net': ElasticNet(alpha=1.0, random_state=42),
             'svr': SVR(kernel='rbf', C=1.0),
-            'neural_network': MLPRegressor(hidden_layers=(100, 50), max_iter=500, random_state=42)
+            'neural_network': MLPRegressor(hidden_layer_sizes=(100, 50), max_iter=500, random_state=42)
         }
         
         # Current best model

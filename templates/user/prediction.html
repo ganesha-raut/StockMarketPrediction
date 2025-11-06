@@ -1,293 +1,1098 @@
-{% extends "base.html" %}
-{% block title %}Prediction - {{ symbol }}{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
 
-{% block extra_css %}
-<style>
-.markdown-content {
-    line-height: 1.6;
-}
-.markdown-content h3 {
-    color: #0d6efd;
-    font-size: 1.1rem;
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-}
-.markdown-content h4 {
-    font-size: 1rem;
-    margin-top: 0.5rem;
-}
-.markdown-content p {
-    margin-bottom: 0.75rem;
-}
-.markdown-content strong {
-    color: #212529;
-    font-weight: 600;
-}
-.markdown-content ul, .markdown-content ol {
-    margin-left: 1.5rem;
-    margin-bottom: 0.75rem;
-}
-.markdown-content li {
-    margin-bottom: 0.25rem;
-}
-.markdown-content hr {
-    margin: 1rem 0;
-    opacity: 0.3;
-}
-.markdown-content em {
-    color: #6c757d;
-}
-.markdown-content code {
-    background-color: #f8f9fa;
-    padding: 0.2rem 0.4rem;
-    border-radius: 3px;
-    font-size: 0.9em;
-}
-</style>
-{% endblock %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Prediction - {{ symbol }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-{% block navbar %}
-<nav class="navbar navbar-expand-lg navbar-light sticky-top">
-    <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="{{ url_for('user.home') }}">
-            <i class="fas fa-chart-line text-primary me-2"></i>
-            {{ app_name }}
-        </a>
-        
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('user.home') }}">
-                        <i class="fas fa-home me-1"></i>Home
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{ url_for('user.watchlist') }}">
-                        <i class="fas fa-star me-1"></i>Watchlist
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('user.notifications') }}">
-                        <i class="fas fa-bell me-1"></i>Notifications
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('user.profile') }}">
-                        <i class="fas fa-user me-1"></i>Profile
-                    </a>
-                </li>
-            </ul>
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dark-bg: #0f172a;
+            --dark-secondary: #1e293b;
+            --dark-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --primary-color: #0ea5e9;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --border-color: #1e293b;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --transition-base: all 0.3s ease;
+            --accent-gradient: linear-gradient(135deg, var(--primary-color), #3b82f6);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        body.light-mode {
+            --dark-bg: #f8fafc;
+            --dark-secondary: #ffffff;
+            --dark-tertiary: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            background: var(--dark-secondary) !important;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-toggle {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 0.8rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition-base);
+            position: relative;
+            overflow: hidden;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+            box-shadow: var(--card-shadow);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1) rotate(8deg);
+        }
+
+        .theme-toggle:active {
+            transform: scale(0.95);
+        }
+
+        .theme-toggle-icon {
+            position: relative;
+            width: 24px;
+            height: 24px;
+            transition: var(--transition-base);
+        }
+
+        .theme-toggle-icon i {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s ease;
+        }
+
+        .sun-icon {
+            color: #ffd43b;
+            transform: translateY(0) rotate(0deg);
+            opacity: 0;
+        }
+
+        .moon-icon {
+            color: #7289da;
+            transform: translateY(0) rotate(0deg);
+            opacity: 1;
+        }
+
+        body.light-mode .sun-icon {
+            transform: translateY(0) rotate(180deg);
+            opacity: 1;
+        }
+
+        body.light-mode .moon-icon {
+            transform: translateY(100%) rotate(-180deg);
+            opacity: 0;
+        }
+
+        .navbar-nav .nav-link {
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: var(--transition-base);
+        }
+
+        .navbar-nav .nav-link:hover {
+            background: var(--glass-bg);
+            color: var(--primary-color);
+        }
+
+        /* News Section */
+        .news-section {
+            margin-top: 2rem;
+            padding: 2rem;
+            background: var(--dark-secondary);
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .news-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .news-header h3 {
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .news-card {
+            background: var(--dark-tertiary);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border-color);
+            position: relative;
+            cursor: pointer;
+        }
+
+        .news-card.expanded {
+            transform: scale(1.02);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            z-index: 1;
+        }
+
+        .news-card .expand-btn {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+            z-index: 2;
+        }
+
+        .news-card .expand-btn:hover {
+            transform: scale(1.1);
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .news-card .expand-btn i {
+            transition: transform 0.3s ease;
+        }
+
+        .news-card.expanded .expand-btn i {
+            transform: rotate(180deg);
+        }
+
+        .news-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-shadow);
+        }
+
+        .news-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .news-content {
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .news-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .news-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .news-card.expanded .news-description {
+            -webkit-line-clamp: unset;
+            line-clamp: unset;
+        }
+
+        .news-content-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(transparent, var(--dark-tertiary));
+            pointer-events: none;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .news-card.expanded .news-content-overlay {
+            opacity: 0;
+        }
+
+        .news-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .news-source {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .news-time {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .news-sentiment {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            backdrop-filter: blur(8px);
+        }
+
+        .sentiment-positive {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.1);
+        }
+
+        .sentiment-negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
+            border: 1px solid rgba(239, 68, 68, 0.1);
+        }
+
+        .sentiment-neutral {
+            background: rgba(14, 165, 233, 0.2);
+            color: var(--primary-color);
+            border: 1px solid rgba(14, 165, 233, 0.1);
+        }
+         
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color) !important;
+        }
+
+        .nav-link {
+            color: var(--text-secondary) !important;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--primary-color) !important;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            background: var(--dark-tertiary);
+            border: none;
+            color: var(--text-primary);
+            float: inline-end;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--primary-color);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--dark-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 30px rgba(14, 165, 233, 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), #06b6d4) !important;
+            border: none;
+            border-radius: 0.75rem 0.75rem 0 0;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Stock Header */
+        .stock-header {
+            background: linear-gradient(135deg, var(--dark-secondary) 0%, var(--dark-tertiary) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .stock-symbol {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            letter-spacing: -0.02em;
+        }
+
+        .stock-name {
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .live-price {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .price-change {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .market-status {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .market-open {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .market-closed {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+        }
+
+        /* Form Controls */
+        .form-control,
+        .form-select {
+            background: var(--dark-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background: var(--dark-tertiary);
+            border-color: var(--primary-color);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+
+        .form-label {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), #06b6d4);
+            border: none;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.3);
+        }
+
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            background: transparent;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: var(--dark-tertiary);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            /* height: 450px; */
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Candlestick Chart */
+        #priceChart {
+            /* max-height: 450px; */
+            width: 100% !important;
+        }
+
+        /* News Cards */
+        .news-card {
+            background: var(--dark-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .news-card:hover {
+            border-color: var(--primary-color);
+            background: rgba(14, 165, 233, 0.05);
+            transform: translateX(5px);
+        }
+
+        .news-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+        }
+
+        .news-snippet {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .news-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .sentiment-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .sentiment-positive {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+        }
+
+        .sentiment-negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
+        }
+
+        .sentiment-neutral {
+            background: rgba(148, 163, 184, 0.2);
+            color: var(--text-muted);
+        }
+
+        /* Modal Styling */
+        .modal-content {
+            background: var(--dark-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+            background: var(--dark-tertiary);
+        }
+
+        .modal-body {
+            background: var(--dark-secondary);
+        }
+
+        .close {
+            color: var(--text-primary);
+        }
+
+        /* Investment Calculator */
+        .investment-calc {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(6, 182, 212, 0.1));
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .calc-item {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .calc-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .calc-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .calc-subtext {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Prediction Result Card */
+        .prediction-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-box {
+            background: var(--dark-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-badge {
+            display: inline-block;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Markdown Content */
+        .markdown-content {
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        .markdown-content h3,
+        .markdown-content h4 {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .markdown-content p {
+            margin-bottom: 1rem;
+        }
+
+        .markdown-content strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .markdown-content ul,
+        .markdown-content ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .markdown-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .markdown-content code {
+            background: var(--dark-tertiary);
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.9em;
+            color: var(--primary-color);
+        }
+
+        .markdown-content hr {
+            border-color: var(--border-color);
+            margin: 1.5rem 0;
+        }
+
+        /* Alerts */
+        .alert {
+            border: none;
+            border-radius: 0.75rem;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: rgba(14, 165, 233, 0.1);
+            border-left-color: var(--primary-color);
+            color: var(--text-primary);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-left-color: var(--success-color);
+            color: var(--text-primary);
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-left-color: var(--danger-color);
+            color: var(--text-primary);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-left-color: var(--warning-color);
+            color: var(--text-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stock-symbol {
+                font-size: 1.75rem;
+            }
+
+            .live-price {
+                font-size: 1.5rem;
+            }
+
+            .prediction-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(14, 165, 233, 0.2);
+            border-top-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Badge Styles */
+        .badge {
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+        }
+
+        .badge-bullish {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+        }
+
+        .badge-bearish {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
+        }
+
+        /* Smooth Transitions */
+        * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/"><i class="fas fa-chart-line me-2"></i>TradePro</a>
             
-            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">
-                <i class="fas fa-sign-out-alt me-1"></i>Logout
-            </a>
+            <div class="d-flex align-items-center">
+                <button class="theme-toggle me-3" onclick="toggleTheme()" title="Toggle Theme">
+                    <div class="theme-toggle-icon">
+                        <i class="fas fa-sun sun-icon"></i>
+                        <i class="fas fa-moon moon-icon"></i>
+                    </div>
+                </button>
+                
+                
+            </div>
         </div>
-    </div>
-</nav>
-{% endblock %}
-{% block content %}
-<div class="container-fluid py-4" style="background: #f9fafb; min-height: 100vh;">
-    <div class="container">
-        <!-- Stock Header -->
-        <div class="card mb-4 shadow-sm">
-            <div class="card-body">
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container-fluid py-4">
+        <div class="container">
+            <!-- Stock Header -->
+            <div class="stock-header">
                 <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <h2 class="mb-2"><strong id="stockSymbol">{{ symbol }}</strong></h2>
-                        <p class="text-muted mb-0" id="stockName">Loading...</p>
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <div class="stock-symbol" id="stockSymbol"> {{ symbol }}</div>
+                        <div class="stock-name" id="stockName">Loading...</div>
                     </div>
                     <div class="col-md-3 text-center">
-                        <h3 class="mb-0" id="livePrice">₹0.00</h3>
-                        <small id="priceChange" class="text-muted">0.00%</small>
+                        <div class="live-price" id="livePrice">₹0.00</div>
+                        <div class="price-change" id="priceChange">
+                            <i class="fas fa-arrow-up"></i> 0.00%
+                        </div>
                     </div>
                     <div class="col-md-3 text-end">
-                        <div id="marketStatus" class="badge bg-secondary p-2">
-                            <i class="fas fa-circle-notch fa-spin me-1"></i>Checking...
+                        <div class="market-status market-closed" id="marketStatus">
+                            <i class="fas fa-circle me-1"></i>Checking...
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="row">
-            <!-- Left Column: Prediction -->
-            <div class="col-lg-8">
-                <!-- Prediction Type Selection -->
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="fas fa-brain me-2"></i>AI Stock Prediction</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-md-12">
+            <div class="row">
+                <!-- Left Column: Prediction & Chart -->
+                <div class="col-lg-8 mb-4">
+                    <!-- Prediction Section -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="fas fa-brain me-2"></i>AI Stock Prediction
+                        </div>
+                        <div class="card-body">
+                            <!-- Stock Search -->
+                            <div class="mb-3">
+                                <label class="form-label">Search Stock:</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="stockSymbolInput"
+                                        placeholder="Enter stock symbol (e.g., AAPL, GOOGL, INFY)"
+                                        value=" {{ symbol }}">
+                                    <button class="btn btn-primary" onclick="changeStock()">
+                                        <i class="fas fa-search me-1"></i>Search
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Prediction Type -->
+                            <div class="mb-3">
                                 <label class="form-label"><strong>Prediction Type:</strong></label>
-                                <select class="form-select" id="predictionType">
-                                    <option value="">-- Select Prediction Type --</option>
-                                    <option value="intraday">Intraday (Today's Closing Price)</option>
-                                    <option value="longterm">Long Term (Future Price Prediction)</option>
+                                <select class="form-select" id="predictionType" onchange="handlePredictionTypeChange()">
+                                    <option value="">-- Select Type --</option>
+                                    <option value="intraday">Intraday (Today's Closing)</option>
+                                    <option value="longterm">Long Term (Future Price)</option>
                                 </select>
                             </div>
-                        </div>
-                        
-                        <!-- Intraday Options -->
-                        <div id="intradaySection" style="display:none;">
-                            <div class="alert alert-info mb-3">
-                                <i class="fas fa-info-circle me-2"></i>
-                                <strong>Intraday Trading:</strong> Predict today's closing price based on current market conditions.
-                            </div>
-                            <div id="marketStatusCheck" class="mb-3"></div>
-                            <div id="investmentInputSection" style="display:none;">
-                                <label class="form-label"><strong>Investment Amount (₹):</strong></label>
-                                <input type="number" class="form-control" id="investmentAmount" placeholder="Enter investment amount (minimum ₹100)" min="100" step="100">
-                                <small class="text-muted">Enter the amount you want to invest to calculate potential profit/loss</small>
-                            </div>
-                        </div>
-                        
-                        <!-- Long Term Options -->
-                        <div id="longtermSection" style="display:none;">
-                            <div class="alert alert-info mb-3">
-                                <i class="fas fa-info-circle me-2"></i>
-                                <strong>Long Term Prediction:</strong> Predict future stock price for any custom date based on AI analysis.
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label"><strong>Select Target Date:</strong></label>
-                                <input type="date" class="form-control" id="targetDate" min="">
-                                <small class="text-muted">Choose any future date for price prediction (no limit)</small>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label"><strong>Or Choose Quick Period:</strong></label>
-                                <div class="btn-group w-100 mb-2" role="group">
-                                    <button type="button" class="btn btn-outline-primary" onclick="setQuickDate(7)">7 Days</button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="setQuickDate(15)">15 Days</button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="setQuickDate(30)">30 Days</button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="setQuickDate(60)">60 Days</button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="setQuickDate(90)">90 Days</button>
+
+                            <!-- Intraday Section -->
+                            <div id="intradaySection" style="display:none;">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Intraday Trading:</strong> Predict today's closing price based on current
+                                    market conditions.
                                 </div>
-                                <div class="btn-group w-100" role="group">
-                                    <button type="button" class="btn btn-outline-primary" onclick="setQuickDate(180)">6 Months</button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="setQuickDate(365)">1 Year</button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="setQuickDate(730)">2 Years</button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="setQuickDate(1095)">3 Years</button>
+                                <div id="marketStatusCheck" class="mb-3"></div>
+                                <div id="investmentInputSection" style="display:none;">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Investment Amount (₹):</strong></label>
+                                        <input type="number" class="form-control" id="investmentAmount"
+                                            placeholder="Enter amount (minimum ₹100)" min="100" step="100">
+                                        <small class="text-muted">Calculate potential profit/loss for intraday
+                                            trade</small>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label"><strong>Investment Amount (₹):</strong></label>
-                                <input type="number" class="form-control" id="longtermInvestment" placeholder="Enter investment amount (minimum ₹100)" min="100" step="100">
-                                <small class="text-muted">Enter the amount you want to invest to calculate potential returns</small>
+
+                            <!-- Long Term Section -->
+                            <div id="longtermSection" style="display:none;">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Long Term Prediction:</strong> Predict future stock price on a custom date.
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Select Target Date:</strong></label>
+                                    <input type="date" class="form-control" id="targetDate">
+                                    <small class="text-muted">Choose any future date for prediction</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Quick Period:</strong></label>
+                                    <div class="btn-group w-100 mb-2" role="group">
+                                        <button type="button" class="btn btn-outline-primary"
+                                            onclick="setQuickDate(7)">7D</button>
+                                        <button type="button" class="btn btn-outline-primary"
+                                            onclick="setQuickDate(15)">15D</button>
+                                        <button type="button" class="btn btn-outline-primary"
+                                            onclick="setQuickDate(30)">30D</button>
+                                        <button type="button" class="btn btn-outline-primary"
+                                            onclick="setQuickDate(60)">60D</button>
+                                        <button type="button" class="btn btn-outline-primary"
+                                            onclick="setQuickDate(90)">90D</button>
+                                    </div>
+                                    <div class="btn-group w-100" role="group">
+                                        <button type="button" class="btn btn-outline-primary"
+                                            onclick="setQuickDate(180)">6M</button>
+                                        <button type="button" class="btn btn-outline-primary"
+                                            onclick="setQuickDate(365)">1Y</button>
+                                        <button type="button" class="btn btn-outline-primary"
+                                            onclick="setQuickDate(730)">2Y</button>
+                                        <button type="button" class="btn btn-outline-primary"
+                                            onclick="setQuickDate(1095)">3Y</button>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Investment Amount (₹):</strong></label>
+                                    <input type="number" class="form-control" id="longtermInvestment"
+                                        placeholder="Enter amount (minimum ₹100)" min="100" step="100">
+                                    <small class="text-muted">Calculate expected returns on investment</small>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary btn-lg w-100" onclick="makePrediction()">
+                                <i class="fas fa-chart-line me-2"></i>Get AI Prediction
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Prediction Results -->
+                    <div id="predictionResult"></div>
+
+                    <!-- Candlestick Chart -->
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-chart-candlestick me-2"></i>Candlestick Chart (30 Days)
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="priceChart"></canvas>
                             </div>
                         </div>
-                        <button class="btn btn-primary btn-lg w-100" onclick="makePrediction()">
-                            <i class="fas fa-chart-line me-2"></i>Get AI Prediction
-                        </button>
                     </div>
                 </div>
 
-                <!-- Prediction Results -->
-                <div id="predictionResult"></div>
-
-                <!-- Price Chart -->
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-header bg-dark text-white">
-                        <h5 class="mb-0"><i class="fas fa-chart-candlestick me-2"></i>Candlestick Chart (30 Days)</h5>
-                    </div>
-                    <div class="card-body" style="background: #1a1a1a;">
-                        <div style="height: 400px; position: relative;">
-                            <canvas id="priceChart"></canvas>
+                <!-- Right Column: News -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card" style="max-height: 900px; overflow-y: auto;">
+                        <div class="card-header">
+                            <i class="fas fa-newspaper me-2"></i>Latest News
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Column: News & Info -->
-            <div class="col-lg-4">
-                <!-- Latest News -->
-                <div class="card shadow-sm">
-                    <div class="card-header bg-info text-white">
-                        <h5 class="mb-0"><i class="fas fa-newspaper me-2"></i>Latest News</h5>
-                    </div>
-                    <div class="card-body" id="newsSection" style="max-height: 600px; overflow-y: auto;">
-                        <div class="text-center py-3">
-                            <div class="spinner-border text-primary"></div>
-                            <p class="mt-2">Loading news...</p>
+                        <div class="card-body" id="newsSection">
+                            <div class="text-center py-4">
+                                <div class="spinner" style="width: 40px; height: 40px; margin: 0 auto;"></div>
+                                <p class="mt-3 mb-0">Loading news...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
 
-{% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script>
-let stockData = null;
-let priceChart = null;
-let marketOpen = false;
+    <!-- News Modal -->
+    <div class="modal fade" id="newsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newsModalTitle">News Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="newsModalContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-// Initialize
-$(document).ready(function() {
-    loadStockData();
-    loadMarketStatus();
-    loadNews();
-    loadChartData();
-    
-    // Set minimum date for target date picker (tomorrow) - No maximum limit
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    $('#targetDate').attr('min', tomorrow.toISOString().split('T')[0]);
-    // No max date - user can select any future date
-    
-    // Handle prediction type change
-    $('#predictionType').change(function() {
-        const type = $(this).val();
-        
-        // Hide all sections first
-        $('#intradaySection').hide();
-        $('#longtermSection').hide();
-        $('#predictionResult').html('');
-        
-        if (type === 'intraday') {
-            $('#intradaySection').show();
-            checkMarketForIntraday();
-        } else if (type === 'longterm') {
-            $('#longtermSection').show();
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        let priceChart = null;
+        let stockData = null;
+        let marketOpen = false;
+
+        $(document).ready(function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const stockSymbol = urlParams.get('symbol');
+
+            if (stockSymbol) {
+                symbol = stockSymbol.toUpperCase();
+                $('#stockSymbolInput').val(symbol);
+                $('#stockSymbol').text(symbol);
+            }
+
+            initializePage();
+            setMinDate();
+        });
+
+        function initializePage() {
+            loadStockData();
+            loadMarketStatus();
+            loadNews();
+            loadChartData();
         }
-    });
-});
 
-// Set quick date buttons
-function setQuickDate(days) {
-    const targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() + days);
-    $('#targetDate').val(targetDate.toISOString().split('T')[0]);
-}
+        function setMinDate() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            $('#targetDate').attr('min', tomorrow.toISOString().split('T')[0]);
+        }
 
-// Load Stock Data
-function loadStockData() {
-    $.get('/user/api/stock/{{ symbol }}', function(response) {
-        if (response.success) {
-            stockData = response.data;
-            const liveData = stockData.live_data;
-            
-            $('#stockName').text(liveData.name || '{{ symbol }}');
-            $('#livePrice').text('₹' + (liveData.live_price || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
-            
-            const changeClass = (liveData.change_price || 0) > 0 ? 'text-success' : 'text-danger';
-            const changeIcon = (liveData.change_price || 0) > 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-            $('#priceChange').html(`<i class="fas ${changeIcon} me-1"></i>${liveData.percent_change_formatted || '0.00%'}`);
-            $('#priceChange').removeClass('text-success text-danger').addClass(changeClass);
-            
-            // Check if model is trained
-            if (!stockData.has_model) {
-                showToast('⚠️ Model not trained for this stock. Train it in admin panel first!', 'warning');
-                $('#predictionResult').html(`
+        function toggleTheme() {
+            const isLight = document.body.classList.toggle('light-mode');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            updateThemeButton();
+        }
+
+        function updateThemeButton() {
+            const themeText = document.getElementById('themeText');
+            const themeBtn = document.querySelector('.theme-toggle');
+            if (document.body.classList.contains('light-mode')) {
+                themeText.textContent = 'Light Mode';
+                themeBtn.innerHTML = '<i class="fas fa-sun me-2"></i><span id="themeText">Light Mode</span>';
+            } else {
+                themeText.textContent = 'Dark Mode';
+                themeBtn.innerHTML = '<i class="fas fa-moon me-2"></i><span id="themeText">Dark Mode</span>';
+            }
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-mode');
+            updateThemeButton();
+        }
+
+        function changeStock() {
+            const symbol = $('#stockSymbolInput').val().toUpperCase();
+            if (symbol && symbol.length > 0) {
+                symbol = symbol;
+                $('#stockSymbol').text(symbol);
+                $('#predictionResult').html('');
+                initializePage();
+            }
+        }
+
+        function loadStockData() {
+            $.get('/user/api/stock/{{ symbol }}', function (response) {
+                if (response.success) {
+                    stockData = response.data;
+                    const liveData = stockData.live_data;
+
+                    $('#stockName').text(liveData.name || '{{ symbol }}');
+                    $('#livePrice').text('₹' + (liveData.live_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }));
+
+                    const changeClass = (liveData.change_price || 0) > 0 ? 'text-success' : 'text-danger';
+                    const changeIcon = (liveData.change_price || 0) > 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                    $('#priceChange').html(`<i class="fas ${changeIcon} me-1"></i>${liveData.percent_change_formatted || '0.00%'}`);
+                    $('#priceChange').removeClass('text-success text-danger').addClass(changeClass);
+
+                    // Check if model is trained
+                    if (!stockData.has_model) {
+                        showToast('⚠️ Model not trained for this stock. Train it in admin panel first!', 'warning');
+                        $('#predictionResult').html(`
                     <div class="alert alert-warning">
                         <h5><i class="fas fa-exclamation-triangle me-2"></i>Model Not Trained</h5>
                         <p>The ML model for <strong>{{ symbol }}</strong> hasn't been trained yet.</p>
@@ -300,789 +1105,604 @@ function loadStockData() {
                         </ol>
                     </div>
                 `);
-            }
-        }
-    }).fail(function(xhr) {
-        console.error('Failed to load stock data:', xhr);
-        const errorMsg = xhr.responseJSON?.message || 'Unable to fetch stock data';
-        showToast('Error: ' + errorMsg, 'danger');
-        $('#stockName').text('{{ symbol }}');
-        $('#livePrice').text('₹0.00');
-    });
-}
-
-// Load Market Status
-function loadMarketStatus() {
-    $.get('/user/api/market-status', function(response) {
-        if (response.success) {
-            marketOpen = response.data.is_open;
-            const statusDiv = $('#marketStatus');
-            
-            if (marketOpen) {
-                statusDiv.html('<i class="fas fa-circle text-success me-1"></i>Market Open');
-                statusDiv.removeClass('bg-secondary bg-danger').addClass('bg-success');
-            } else {
-                statusDiv.html('<i class="fas fa-circle text-white me-1"></i>Market Closed');
-                statusDiv.removeClass('bg-secondary bg-success').addClass('bg-danger');
-            }
-        }
-    });
-}
-
-// Check Market Status for Intraday
-function checkMarketForIntraday() {
-    const checkDiv = $('#marketStatusCheck');
-    checkDiv.html('<div class="text-center"><div class="spinner-border spinner-border-sm me-2"></div>Checking market status...</div>');
-    
-    $.get('/user/api/market-status', function(response) {
-        if (response.success) {
-            marketOpen = response.data.is_open;
-            // marketOpen = true
-            
-            if (marketOpen) {
-                checkDiv.html(`
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle me-2"></i>
-                        <strong>Market is OPEN!</strong> You can proceed with intraday trading.
-                        <p class="mb-0 mt-2 small">Market closes at ${response.data.close_time || '3:30 PM'}. Predictions are based on current market trends.</p>
-                    </div>
-                `);
-                $('#investmentInputSection').show();
-            } else {
-                checkDiv.html(`
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Market is CLOSED!</strong>
-                        <p class="mb-0 mt-2">Intraday predictions are only available during market hours (9:15 AM - 3:30 PM IST).</p>
-                        <p class="mb-0 mt-2 small">Market opens at ${response.data.open_time || '9:15 AM'}. Please try long-term prediction instead.</p>
-                    </div>
-                `);
-                $('#investmentInputSection').hide();
-            }
-        }
-    }).fail(function() {
-        checkDiv.html(`
-            <div class="alert alert-danger">
-                <i class="fas fa-times-circle me-2"></i>
-                Failed to check market status. Please try again.
-            </div>
-        `);
-    });
-}
-
-// Load News
-function loadNews() {
-    $.get('/api/stock-news/{{ symbol }}', function(response) {
-        console.log('News response:', response);
-        
-        if (response.success && response.data.length > 0) {
-            let html = '';
-            response.data.forEach((news, i) => {
-                console.log('News item:', news.title, 'Link:', news.link);
-                const sentimentClass = news.sentiment > 0 ? 'success' : news.sentiment < 0 ? 'danger' : 'secondary';
-                const sentimentText = news.sentiment > 0 ? 'Positive' : news.sentiment < 0 ? 'Negative' : 'Neutral';
-                const sentimentIcon = news.sentiment > 0 ? 'fa-arrow-up' : news.sentiment < 0 ? 'fa-arrow-down' : 'fa-minus';
-                
-                // Full snippet with fallback
-                let snippet = news.snippet || '';
-                if (!snippet || snippet === 'No description available') {
-                    snippet = `Latest update on ${news.title}. Click to read more about this development and its market impact.`;
+                    }
                 }
-                const newsId = `news-${i}`;
-                
-                html += `
-                    <div class="card mb-3 shadow-sm">
-                        <div class="card-body p-3">
-                            <h6 class="mb-2 text-dark">
-                                <i class="fas fa-newspaper me-2 text-primary"></i>${news.title}
-                            </h6>
-                            
-                            <!-- Short preview -->
-                            <div id="${newsId}-preview" class="news-preview">
-                                <p class="text-muted small mb-2">${snippet.substring(0, 150)}${snippet.length > 150 ? '...' : ''}</p>
-                            </div>
-                            
-                            <!-- Full content (hidden by default) -->
-                            <div id="${newsId}-full" class="news-full" style="display: none;">
-                                <p class="text-muted small mb-2">${snippet}</p>
-                            </div>
-                            
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <small class="text-muted">
-                                    <i class="fas fa-building me-1"></i>${news.source}
-                                    ${news.time ? ` • <i class="fas fa-clock me-1"></i>${news.time}` : ''}
-                                </small>
-                                <span class="badge bg-${sentimentClass}">
-                                    <i class="fas ${sentimentIcon} me-1"></i>${sentimentText}
-                                </span>
-                            </div>
-                            
-                            <!-- Expand/Collapse button -->
-                            ${snippet.length > 150 ? `
-                                <button class="btn btn-sm btn-outline-primary w-100" onclick="toggleNews('${newsId}')">
-                                    <i class="fas fa-chevron-down me-1" id="${newsId}-icon"></i>
-                                    <span id="${newsId}-text">Read More</span>
-                                </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
+            }).fail(function (xhr) {
+                console.error('Failed to load stock data:', xhr);
+                const errorMsg = xhr.responseJSON?.message || 'Unable to fetch stock data';
+                showToast('Error: ' + errorMsg, 'danger');
+                $('#stockName').text('{{ symbol }}');
+                $('#livePrice').text('₹0.00');
             });
-            $('#newsSection').html(html);
-        } else {
-            $('#newsSection').html(`
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    No recent news available for {{ symbol }}
-                </div>
-            `);
         }
-    }).fail(function() {
-        $('#newsSection').html(`
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                Failed to load news
-            </div>
-        `);
-    });
-}
 
-// Load Chart Data
-function loadChartData() {
-    console.log('Loading chart data for {{ symbol }}...');
-    
-    $.get('/api/stock-chart-data/{{ symbol }}', function(response) {
-        console.log('Chart data response:', response);
-        
-        if (response.success && response.data && response.data.length > 0) {
-            console.log('Creating chart with', response.data.length, 'data points');
-            createCandlestickChart(response.data);
-        } else {
-            console.warn('No chart data available');
-            $('#priceChart').parent().html(`
-                <div class="alert alert-warning text-center">
-                    <i class="fas fa-chart-line me-2"></i>
-                    No historical data available for chart
-                </div>
-            `);
-        }
-    }).fail(function(xhr, status, error) {
-        console.error('Failed to load chart data:', error);
-        console.error('Status:', status);
-        console.error('Response:', xhr.responseText);
-        
-        $('#priceChart').parent().html(`
-            <div class="alert alert-danger text-center">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                Failed to load chart data
-            </div>
-        `);
-    });
-}
 
-// Create Candlestick Chart
-function createCandlestickChart(data) {
-    try {
-        console.log('Creating candlestick chart...');
-        
-        const ctx = document.getElementById('priceChart');
-        if (!ctx) {
-            console.error('Canvas element not found');
-            return;
+        function loadMarketStatus() {
+            $.ajax({
+                url: '/user/api/market-status',
+                method: 'GET',
+                success: function (response) {
+                    if (response.success) {
+                        marketOpen = response.data.is_open;
+                        // marketOpen=true
+                        const statusDiv = $('#marketStatus');
+
+                        if (marketOpen) {
+                            statusDiv.html('<i class="fas fa-circle text-success me-1"></i>Market Open').removeClass('market-closed').addClass('market-open');
+                        } else {
+                            statusDiv.html('<i class="fas fa-circle text-danger me-1"></i>Market Closed').removeClass('market-open').addClass('market-closed');
+                        }
+                    }
+                }
+            });
         }
-        
-        // Destroy existing chart if any
-        if (priceChart) {
-            priceChart.destroy();
+
+        function loadNews() {
+            $.get('/api/stock-news/{{ symbol }}', function (response) {
+                console.log('News response:', response)
+                if (response.success && response.data && response.data.length > 0) {
+                    let html = '';
+                    response.data.forEach((news, index) => {
+                        const sentimentClass = news.sentiment > 0 ? 'sentiment-positive' : news.sentiment < 0 ? 'sentiment-negative' : 'sentiment-neutral';
+                        const sentimentText = news.sentiment > 0 ? 'Positive' : news.sentiment < 0 ? 'Negative' : 'Neutral';
+
+                        const newsData = JSON.stringify({
+                            title: news.title,
+                            content: news.content || news.snippet || 'No details available',
+                            snippet: news.snippet,
+                            sentiment: sentimentText,
+                            source: news.source,
+                            date: news.date || 'Recently',
+                            url: news.url || '#'
+                        }).replace(/"/g, '&quot;');
+
+                        html += `
+                                <div class="news-card" onclick="openNewsModal('${newsData}')">
+                                    <div class="news-title">${news.title}</div>
+                                    <div class="news-snippet">${(news.snippet || 'Click to read more').substring(0, 120)}...</div>
+                                    <div class="news-meta">
+                                        <span><i class="fas fa-building me-1"></i>${news.source}</span>
+                                        <span class="sentiment-badge ${sentimentClass}">
+                                            <i class="fas fa-chart-line me-1"></i>${sentimentText}
+                                        </span>
+                                    </div>
+                                </div>
+                            `;
+                    });
+                    $('#newsSection').html(html);
+                } else {
+                    $('#newsSection').html('<div class="alert alert-info"><i class="fas fa-info-circle me-2"></i>No news available</div>');
+
+                }
+            }).fail(function () {
+                $('#newsSection').html('<div class="alert alert-danger"><i class="fas fa-exclamation me-2"></i>Failed to load news</div>');
+            });
         }
-        
-        // Prepare candlestick data
-        const candlestickData = data.map(d => ({
-            x: new Date(d.date).getTime(),
-            o: d.open,
-            h: d.high,
-            l: d.low,
-            c: d.close
-        }));
-        
-        console.log('Candlestick data prepared:', candlestickData.length, 'candles');
-    
-    // Prepare volume data
-    const volumeData = data.map(d => ({
-        x: new Date(d.date).getTime(),
-        y: d.volume
-    }));
-    
-    // Prepare labels (dates as strings)
-    const labels = data.map(d => {
-        const date = new Date(d.date);
-        return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
-    });
-    
-    // Create professional candlestick chart (AngelOne/Zerodha style)
-    priceChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Dummy',
-                data: data.map(d => d.close),
-                borderWidth: 0,
-                pointRadius: 0
-            }]
-        },
-        plugins: [{
-            id: 'professionalCandlestick',
-            afterDatasetsDraw: function(chart) {
-                const ctx = chart.ctx;
-                const xAxis = chart.scales.x;
-                const yAxis = chart.scales.y;
-                
-                data.forEach((d, i) => {
-                    const x = xAxis.getPixelForValue(i);
-                    const yOpen = yAxis.getPixelForValue(d.open);
-                    const yClose = yAxis.getPixelForValue(d.close);
-                    const yHigh = yAxis.getPixelForValue(d.high);
-                    const yLow = yAxis.getPixelForValue(d.low);
-                    
-                    const isBullish = d.close >= d.open;
-                    const candleWidth = 10;
-                    
-                    // Colors - AngelOne style
-                    const bullColor = '#00C853';  // Bright green
-                    const bearColor = '#FF1744';  // Bright red
-                    const color = isBullish ? bullColor : bearColor;
-                    
-                    // Draw wick (thin line from high to low)
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 1.5;
-                    ctx.beginPath();
-                    ctx.moveTo(x, yHigh);
-                    ctx.lineTo(x, yLow);
-                    ctx.stroke();
-                    
-                    // Draw body (rectangle from open to close)
-                    const bodyHeight = Math.abs(yClose - yOpen) || 1;
-                    const bodyY = Math.min(yOpen, yClose);
-                    
-                    ctx.fillStyle = color;
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 1;
-                    
-                    // Bullish candle - filled
-                    if (isBullish) {
-                        ctx.fillRect(x - candleWidth/2, bodyY, candleWidth, bodyHeight);
+
+        function openNewsModal(newsDataStr) {
+            try {
+                const newsData = JSON.parse(newsDataStr);
+
+                $('#newsModalTitle').text(newsData.title);
+
+                const sentimentClass = newsData.sentiment === 'Positive' ? 'bg-success' :
+                    newsData.sentiment === 'Negative' ? 'bg-danger' : 'bg-secondary';
+
+                const contentText = (newsData.content || newsData.snippet || 'No content available').trim();
+                const parsedContent = marked.parse(contentText);
+
+                const modalContent = `
+                    <article>
+                        <h6 class="mb-3" style="color: var(--primary-color); font-weight: 600;">${newsData.title}</h6>
+                        
+                        <div class="mb-3 pb-3" style="border-bottom: 1px solid var(--border-color);">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <small>
+                                    <i class="fas fa-calendar me-2"></i><strong>Date:</strong> ${newsData.date}<br>
+                                    <i class="fas fa-building me-2"></i><strong>Source:</strong> ${newsData.source}
+                                </small>
+                                <span class="badge ${sentimentClass}">${newsData.sentiment}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="markdown-content mb-3">
+                            ${parsedContent}
+                        </div>
+                        
+                        ${newsData.url && newsData.url !== '#' ? `
+                            <div class="mt-3 pt-3" style="border-top: 1px solid var(--border-color);">
+                                <a href="${newsData.url}" target="_blank" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-external-link-alt me-1"></i>Read Full Article
+                                </a>
+                            </div>
+                        ` : ''}
+                    </article>
+                `;
+
+                $('#newsModalContent').html(modalContent);
+                new bootstrap.Modal(document.getElementById('newsModal')).show();
+            } catch (e) {
+                console.error('Error parsing news data:', e);
+                showToast('Error loading news details', 'danger');
+            }
+        }
+
+        function loadChartData() {
+            $.ajax({
+                url: '/api/stock-chart-data/{{ symbol }}',
+                method: 'GET',
+                success: function (response) {
+                    console.log('[v0] Chart data response:', response);
+                    if (response.success && response.data && response.data.length > 0) {
+                        createCandlestickChart(response.data);
                     } else {
-                        // Bearish candle - filled
-                        ctx.fillRect(x - candleWidth/2, bodyY, candleWidth, bodyHeight);
-                    }
-                    
-                    // Add border for definition
-                    ctx.strokeRect(x - candleWidth/2, bodyY, candleWidth, bodyHeight);
-                });
-            }
-        }],
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false
-            },
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        color: '#fff',
-                        font: {
-                            size: 14,
-                            weight: 'bold'
-                        }
+                        $('#priceChart').parent().html('<div class="alert alert-info w-100 text-center"><i class="fas fa-info-circle me-2"></i>No historical data available for chart.</div>');
                     }
                 },
-                tooltip: {
-                    enabled: true,
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    titleColor: '#fff',
-                    bodyColor: '#fff',
-                    borderColor: '#667eea',
-                    borderWidth: 1,
-                    callbacks: {
-                        title: function(context) {
-                            return data[context[0].dataIndex].date;
-                        },
-                        afterTitle: function(context) {
-                            const idx = context[0].dataIndex;
-                            const d = data[idx];
-                            return [
-                                `Open: ₹${d.open.toFixed(2)}`,
-                                `High: ₹${d.high.toFixed(2)}`,
-                                `Low: ₹${d.low.toFixed(2)}`,
-                                `Close: ₹${d.close.toFixed(2)}`,
-                                `Volume: ${d.volume.toLocaleString('en-IN')}`
-                            ];
-                        }
-                    }
+                error: function (xhr) {
+                    console.log('[v0] Chart data error:', xhr);
+                    $('#priceChart').parent().html('<div class="alert alert-danger w-100 text-center"><i class="fas fa-exclamation me-2"></i>Failed to load chart data.</div>');
                 }
-            },
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Date',
-                        color: '#fff'
-                    },
-                    ticks: {
-                        color: '#aaa',
-                        maxRotation: 45,
-                        minRotation: 45
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    }
-                },
-                y: {
-                    beginAtZero: false,
-                    title: {
-                        display: true,
-                        text: 'Price (₹)',
-                        color: '#fff'
-                    },
-                    ticks: {
-                        color: '#aaa',
-                        callback: function(value) {
-                            return '₹' + value.toFixed(2);
-                        }
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    }
-                }
-            }
+            });
         }
-    });
-    
-    console.log('Chart created successfully');
-    
-    } catch (error) {
-        console.error('Error creating chart:', error);
-        $('#priceChart').parent().html(`
+
+        function createCandlestickChart(data) {
+            try {
+                console.log('Creating candlestick chart...');
+
+                const ctx = document.getElementById('priceChart');
+                if (!ctx) {
+                    console.error('Canvas element not found');
+                    return;
+                }
+
+                // Destroy existing chart if any
+                if (priceChart) {
+                    priceChart.destroy();
+                }
+
+                // Prepare candlestick data
+                const candlestickData = data.map(d => ({
+                    x: new Date(d.date).getTime(),
+                    o: d.open,
+                    h: d.high,
+                    l: d.low,
+                    c: d.close
+                }));
+
+                console.log('Candlestick data prepared:', candlestickData.length, 'candles');
+
+                // Prepare volume data
+                const volumeData = data.map(d => ({
+                    x: new Date(d.date).getTime(),
+                    y: d.volume
+                }));
+
+                // Prepare labels (dates as strings)
+                const labels = data.map(d => {
+                    const date = new Date(d.date);
+                    return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+                });
+
+                // Create professional candlestick chart (AngelOne/Zerodha style)
+                priceChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '(30) Days Data',
+                            data: data.map(d => d.close),
+                            borderWidth: 0,
+                            pointRadius: 0
+                        }]
+                    },
+                    plugins: [{
+                        id: 'professionalCandlestick',
+                        afterDatasetsDraw: function (chart) {
+                            const ctx = chart.ctx;
+                            const xAxis = chart.scales.x;
+                            const yAxis = chart.scales.y;
+
+                            data.forEach((d, i) => {
+                                const x = xAxis.getPixelForValue(i);
+                                const yOpen = yAxis.getPixelForValue(d.open);
+                                const yClose = yAxis.getPixelForValue(d.close);
+                                const yHigh = yAxis.getPixelForValue(d.high);
+                                const yLow = yAxis.getPixelForValue(d.low);
+
+                                const isBullish = d.close >= d.open;
+                                const candleWidth = 10;
+
+                                // Colors - AngelOne style
+                                const bullColor = '#00C853';  // Bright green
+                                const bearColor = '#FF1744';  // Bright red
+                                const color = isBullish ? bullColor : bearColor;
+
+                                // Draw wick (thin line from high to low)
+                                ctx.strokeStyle = color;
+                                ctx.lineWidth = 1.5;
+                                ctx.beginPath();
+                                ctx.moveTo(x, yHigh);
+                                ctx.lineTo(x, yLow);
+                                ctx.stroke();
+
+                                // Draw body (rectangle from open to close)
+                                const bodyHeight = Math.abs(yClose - yOpen) || 1;
+                                const bodyY = Math.min(yOpen, yClose);
+
+                                ctx.fillStyle = color;
+                                ctx.strokeStyle = color;
+                                ctx.lineWidth = 1;
+
+                                // Bullish candle - filled
+                                if (isBullish) {
+                                    ctx.fillRect(x - candleWidth / 2, bodyY, candleWidth, bodyHeight);
+                                } else {
+                                    // Bearish candle - filled
+                                    ctx.fillRect(x - candleWidth / 2, bodyY, candleWidth, bodyHeight);
+                                }
+
+                                // Add border for definition
+                                ctx.strokeRect(x - candleWidth / 2, bodyY, candleWidth, bodyHeight);
+                            });
+                        }
+                    }],
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    color: '#fff',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: '#667eea',
+                                borderWidth: 1,
+                                callbacks: {
+                                    title: function (context) {
+                                        return data[context[0].dataIndex].date;
+                                    },
+                                    afterTitle: function (context) {
+                                        const idx = context[0].dataIndex;
+                                        const d = data[idx];
+                                        return [
+                                            `Open: ₹${d.open.toFixed(2)}`,
+                                            `High: ₹${d.high.toFixed(2)}`,
+                                            `Low: ₹${d.low.toFixed(2)}`,
+                                            `Close: ₹${d.close.toFixed(2)}`,
+                                            `Volume: ${d.volume.toLocaleString('en-IN')}`
+                                        ];
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Date',
+                                    color: '#fff'
+                                },
+                                ticks: {
+                                    color: '#aaa',
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            y: {
+                                beginAtZero: false,
+                                title: {
+                                    display: true,
+                                    text: 'Price (₹)',
+                                    color: '#fff'
+                                },
+                                ticks: {
+                                    color: '#aaa',
+                                    callback: function (value) {
+                                        return '₹' + value.toFixed(2);
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                console.log('Chart created successfully');
+
+            } catch (error) {
+                console.error('Error creating chart:', error);
+                $('#priceChart').parent().html(`
             <div class="alert alert-danger text-center">
                 <i class="fas fa-exclamation-triangle me-2"></i>
                 Error creating chart: ${error.message}
             </div>
         `);
-    }
-}
-
-// Make Prediction
-function makePrediction() {
-    const type = $('#predictionType').val();
-    
-    // Validate prediction type selection
-    if (!type) {
-        showToast('Please select a prediction type (Intraday or Long Term)', 'warning');
-        $('#predictionType').focus();
-        return;
-    }
-    
-    // Intraday validation
-    if (type === 'intraday') {
-        if (!marketOpen) {
-            showToast('Market is closed. Intraday prediction not available.', 'warning');
-            return;
-        }
-        
-        const investment = $('#investmentAmount').val();
-        if (!investment || investment < 100) {
-            showToast('Please enter investment amount (minimum ₹100)', 'warning');
-            $('#investmentAmount').focus();
-            return;
-        }
-    }
-    
-    // Long term validation
-    let predictionPeriod = 7;
-    let targetDate = null;
-    let longtermInvestment = null;
-    
-    if (type === 'longterm') {
-        targetDate = $('#targetDate').val();
-        longtermInvestment = $('#longtermInvestment').val();
-        
-        // Validate target date
-        if (!targetDate) {
-            showToast('Please select a target date for prediction', 'warning');
-            $('#targetDate').focus();
-            return;
-        }
-        
-        // Calculate days from today
-        const today = new Date();
-        const target = new Date(targetDate);
-        predictionPeriod = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
-        
-        if (predictionPeriod < 1) {
-            showToast('Target date must be in the future', 'warning');
-            $('#targetDate').focus();
-            return;
-        }
-        
-        // No maximum limit - user can select any future date
-        // Note: Very long-term predictions (>1 year) may have lower accuracy
-        
-        if (!longtermInvestment || longtermInvestment < 100) {
-            showToast('Please enter investment amount (minimum ₹100)', 'warning');
-            $('#longtermInvestment').focus();
-            return;
-        }
-    }
-    
-    // Show loading
-    $('#predictionResult').html(`
-        <div class="card shadow-sm">
-            <div class="card-body text-center py-5">
-                <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
-                <h5>Analyzing with AI...</h5>
-                <p class="text-muted">Processing ${type === 'intraday' ? 'intraday' : predictionPeriod + ' days'} prediction for {{ symbol }}${targetDate ? ' (Target: ' + new Date(targetDate).toLocaleDateString('en-IN') + ')' : ''}</p>
-            </div>
-        </div>
-    `);
-    
-    // Prepare request data
-    const requestData = {
-        type: type,
-        investment: type === 'intraday' ? parseFloat($('#investmentAmount').val()) : parseFloat(longtermInvestment),
-        period: type === 'longterm' ? predictionPeriod : null,
-        target_date: type === 'longterm' ? targetDate : null
-    };
-    
-    $.ajax({
-        url: '/api/predict/{{ symbol }}',
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(requestData),
-        success: function(response) {
-            if (response.success) {
-                displayPredictionResult(response.data, type, requestData);
             }
-        },
-        error: function(xhr) {
-            const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Prediction failed. Please ensure the model is trained in admin panel.';
+        }
+
+        // Make Prediction
+        function makePrediction() {
+            const type = $('#predictionType').val();
+
+            // Validate prediction type selection
+            if (!type) {
+                showToast('Please select a prediction type (Intraday or Long Term)', 'warning');
+                $('#predictionType').focus();
+                return;
+            }
+
+            // Intraday validation
+            if (type === 'intraday') {
+                if (!marketOpen) {
+                    showToast('Market is closed. Intraday prediction not available.', 'warning');
+                    return;
+                }
+
+                const investment = $('#investmentAmount').val();
+                if (!investment || investment < 100) {
+                    showToast('Please enter investment amount (minimum ₹100)', 'warning');
+                    $('#investmentAmount').focus();
+                    return;
+                }
+            }
+        }
+        function handlePredictionTypeChange() {
+            $('#intradaySection').hide();
+            $('#longtermSection').hide();
+            $('#predictionResult').html('');
+
+            const type = $('#predictionType').val();
+            if (type === 'intraday') {
+                $('#intradaySection').show();
+                checkMarketForIntraday();
+            } else if (type === 'longterm') {
+                $('#longtermSection').show();
+            }
+        }
+
+        function checkMarketForIntraday() {
+            $.ajax({
+                url: '/user/api/market-status',
+                method: 'GET',
+                success: function (response) {
+                    marketOpen = response.data.is_open;
+                    // marketOpen=true
+                    const checkDiv = $('#marketStatusCheck');
+
+                    if (marketOpen) {
+                        checkDiv.html('<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i>Market is OPEN! You can trade intraday.</div>');
+                        $('#investmentInputSection').show();
+                    } else {
+                        checkDiv.html('<div class="alert alert-warning"><i class="fas fa-exclamation me-2"></i>Market is CLOSED! Intraday trading not available.</div>');
+                        $('#investmentInputSection').hide();
+                    }
+                }
+            });
+        }
+
+        function setQuickDate(days) {
+            const date = new Date();
+            date.setDate(date.getDate() + days);
+            $('#targetDate').val(date.toISOString().split('T')[0]);
+        }
+
+        function makePrediction() {
+            const type = $('#predictionType').val();
+
+            if (!type) {
+                showToast('Please select prediction type', 'warning');
+                return;
+            }
+
+            let investment = 0;
+            let targetDate = null;
+            let period = 0;
+
+            if (type === 'intraday') {
+                investment = parseFloat($('#investmentAmount').val()) || 0;
+                if (!marketOpen) {
+                    showToast('Market is closed', 'warning');
+                    return;
+                }
+                if (investment < 100) {
+                    showToast('Minimum investment is ₹100', 'warning');
+                    return;
+                }
+            } else {
+                targetDate = $('#targetDate').val();
+                investment = parseFloat($('#longtermInvestment').val()) || 0;
+                if (!targetDate) {
+                    showToast('Please select target date', 'warning');
+                    return;
+                }
+                if (investment < 100) {
+                    showToast('Minimum investment is ₹100', 'warning');
+                    return;
+                }
+                const today = new Date();
+                const target = new Date(targetDate);
+                period = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+            }
+
             $('#predictionResult').html(`
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i><strong>Error:</strong> ${msg}
-                    <p class="mb-0 mt-2 small">Tip: Make sure the stock model is trained in the admin panel before making predictions.</p>
+                <div class="card mb-4">
+                    <div class="card-body text-center py-5">
+                        <div class="spinner" style="width: 50px; height: 50px; margin: 0 auto;"></div>
+                        <h5 class="mt-4">Analyzing with AI...</h5>
+                    </div>
                 </div>
             `);
-        }
-    });
-}
 
-// Display Prediction Result
-function displayPredictionResult(data, type, requestData) {
-    const changeClass = data.price_change > 0 ? 'success' : 'danger';
-    const trendClass = data.trend === 'bullish' ? 'success' : data.trend === 'bearish' ? 'danger' : 'secondary';
-    const recClass = data.recommendation === 'BUY' ? 'success' : data.recommendation === 'SELL' ? 'danger' : 'warning';
-    
-    let investmentCalc = '';
-    
-    // Investment Calculator (for both intraday and longterm - using server calculation)
-    if (data.investment) {
-        const inv = data.investment;
-        const periodText = type === 'longterm' && data.period ? ` (${data.period.period_days} Days)` : '';
-        
-        investmentCalc = `
-            <div class="card bg-light mb-3">
-                <div class="card-body">
-                    <h6 class="card-title"><i class="fas fa-calculator me-2"></i>Investment Calculator${periodText}</h6>
-                    <div class="row text-center">
-                        <div class="col-md-3">
-                            <p class="mb-0 text-muted small">Investment</p>
-                            <h6>₹${inv.actual_investment.toLocaleString('en-IN', {minimumFractionDigits: 2})}</h6>
-                            ${inv.remaining_cash > 0 ? `<small class="text-muted">(₹${inv.remaining_cash.toFixed(2)} unused)</small>` : ''}
-                        </div>
-                        <div class="col-md-3">
-                            <p class="mb-0 text-muted small">Shares</p>
-                            <h6>${inv.shares}</h6>
-                            <small class="text-muted">@ ₹${inv.buy_price.toFixed(2)}</small>
-                        </div>
-                        <div class="col-md-3">
-                            <p class="mb-0 text-muted small">Target Value</p>
-                            <h6>₹${inv.predicted_value.toLocaleString('en-IN', {minimumFractionDigits: 2})}</h6>
-                            <small class="text-muted">@ ₹${inv.target_price.toFixed(2)}</small>
-                        </div>
-                        <div class="col-md-3">
-                            <p class="mb-0 text-muted small">Expected Profit</p>
-                            <h6 class="text-${inv.profit_loss >= 0 ? 'success' : 'danger'}">
-                                ${inv.profit_loss >= 0 ? '+' : ''}₹${inv.profit_loss.toLocaleString('en-IN', {minimumFractionDigits: 2})}
-                                <small>(${inv.profit_loss_percent >= 0 ? '+' : ''}${inv.profit_loss_percent.toFixed(2)}%)</small>
-                            </h6>
-                        </div>
+            // const requestData = {
+            //     type: type,
+            //     investment: type === 'intraday' ? parseFloat($('#investmentAmount').val()) : parseFloat(longtermInvestment),
+            //     period: type === 'longterm' ? predictionPeriod : null,
+            //     target_date: type === 'longterm' ? targetDate : null
+            // };
+            $.ajax({
+                url: '/api/predict/{{symbol}}',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    type: type,
+                    investment: investment,
+                    period: period,
+                    target_date: targetDate
+                }),
+                success: function (response) {
+                    if (response.success) {
+                        displayPredictionResult(response.data, type);
+                    }
+                },
+                error: function (xhr) {
+                    const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Prediction failed';
+                    $('#predictionResult').html(`<div class="alert alert-danger"><i class="fas fa-exclamation me-2"></i>${msg}</div>`);
+                }
+            });
+        }
+
+        function displayPredictionResult(data, type) {
+            const changeClass = data.price_change > 0 ? 'success' : 'danger';
+            const trendIcon = data.trend === 'bullish' ? 'fa-arrow-up text-success' : data.trend === 'bearish' ? 'fa-arrow-down text-danger' : 'fa-minus text-secondary';
+
+            let html = `
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line me-2"></i>${type === 'intraday' ? 'Intraday' : 'Long Term'} Prediction Result
                     </div>
-                </div>
-            </div>
-        `;
-    }
-    // Investment calculator is already shown above for both types
-    
-    const html = `
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-${changeClass} text-white">
-                <h5 class="mb-0">
-                    <i class="fas fa-chart-line me-2"></i>
-                    ${type === 'intraday' ? 'Intraday' : 'Long Term'} Prediction Result
-                </h5>
-            </div>
-            <div class="card-body">
-                ${investmentCalc}
-                
-                <div class="alert alert-info mb-3">
-                    <i class="fas fa-clock me-2"></i>
-                    <small><strong>Prediction Generated:</strong> ${
-                        data.prediction_date ? 
-                        new Date(data.prediction_date.replace(' ', 'T')).toLocaleString('en-IN', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: true
-                        }) : 
-                        new Date().toLocaleString('en-IN', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: true
-                        })
-                    }</small>
-                    <br>
-                    <i class="fas fa-info-circle me-2"></i>
-                    <small><strong>Note:</strong> The "Base Price" below is the stock price at the time this prediction was made. The "Live Price" at the top shows the current real-time market price, which may differ due to ongoing market movements.</small>
-                </div>
-                
-                <div class="row text-center mb-4">
-                    <div class="col-md-4">
-                        <p class="mb-1 text-muted">Base Price (Analysis Time)</p>
-                        <h4>₹${data.current_price.toLocaleString('en-IN', {minimumFractionDigits: 2})}</h4>
-                        <small class="text-muted">${
-                            data.prediction_date ? 
-                            new Date(data.prediction_date.replace(' ', 'T')).toLocaleString('en-IN', {
-                                day: 'numeric',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: true
-                            }) : 
-                            'Just now'
-                        }</small>
-                    </div>
-                    <div class="col-md-4">
-                        <p class="mb-1 text-muted">Predicted Price ${data.period ? '(' + data.period.period_days + ' Days)' : ''}</p>
-                        <h4 class="text-${changeClass}">₹${data.predicted_price.toLocaleString('en-IN', {minimumFractionDigits: 2})}</h4>
-                        <small class="text-muted">${
-                            data.period && data.period.target_date ? 
-                            'Target: ' + new Date(data.period.target_date).toLocaleDateString('en-IN', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric'
-                            }) : 
-                            'AI forecast'
-                        }</small>
-                    </div>
-                    <div class="col-md-4">
-                        <p class="mb-1 text-muted">Expected Change</p>
-                        <h4 class="text-${changeClass}">
-                            ${data.percent_change > 0 ? '+' : ''}${data.percent_change.toFixed(2)}%
-                        </h4>
-                        <small class="text-muted">From base price</small>
-                    </div>
-                </div>
-                
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
-                            <span><strong>Trend:</strong></span>
-                            <span class="badge bg-${trendClass} fs-6">${data.trend.toUpperCase()}</span>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
-                            <span><strong>Recommendation:</strong></span>
-                            <span class="badge bg-${recClass} fs-6">${data.recommendation}</span>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
-                            <span><strong>Confidence:</strong></span>
-                            <span class="badge bg-primary fs-6">${data.confidence.toFixed(1)}%</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="alert alert-${data.risk_percentage > 70 ? 'danger' : data.risk_percentage > 40 ? 'warning' : 'success'}">
-                    <strong><i class="fas fa-exclamation-triangle me-2"></i>Risk Level:</strong> ${data.risk_percentage.toFixed(1)}%
-                    <p class="mb-0 mt-2 small">
-                        ${data.risk_percentage > 70 ? 'High risk - Consider waiting or reducing investment' : 
-                          data.risk_percentage > 40 ? 'Moderate risk - Proceed with caution' : 
-                          'Low risk - Good opportunity'}
-                    </p>
-                </div>
-                
-                ${data.hybrid_details && data.ml_prediction && data.ai_prediction ? `
-                    <div class="card mb-3 border-success">
-                        <div class="card-header bg-success text-white">
-                            <h6 class="mb-0">
-                                <i class="fas fa-chart-line me-2"></i>
-                                Investment Analysis
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            ${data.ml_prediction.investment_timing ? `
-                                <div class="alert alert-${data.ml_prediction.investment_timing.timing === 'Excellent' || data.ml_prediction.investment_timing.timing === 'Very Good' ? 'success' : data.ml_prediction.investment_timing.timing === 'Good' ? 'info' : 'warning'} mb-3">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <h6 class="mb-2"><i class="fas fa-bullseye me-1"></i>Expected Return: <strong>${data.ml_prediction.expected_return.toFixed(1)}%</strong></h6>
-                                            <small>${data.ml_prediction.investment_timing.reason}</small>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <small class="d-block"><strong>Investment Timing:</strong> ${data.ml_prediction.investment_timing.timing}</small>
-                                            <small class="d-block"><strong>Best Holding:</strong> ${data.ml_prediction.investment_timing.best_holding_period}</small>
-                                            <small class="d-block"><strong>Risk Level:</strong> ${data.ml_prediction.investment_timing.risk_level}</small>
-                                        </div>
-                                    </div>
+                    <div class="card-body">
+                        <div class="investment-calc">
+                            <div class="row">
+                                <div class="col-md-3 calc-item">
+                                    <div class="calc-label">Investment</div>
+                                    <div class="calc-value">₹${(data.investment?.actual_investment || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                                    ${data.investment?.remaining_cash > 0 ? `<div class="calc-subtext">₹${data.investment.remaining_cash.toFixed(2)} unused</div>` : ''}
                                 </div>
-                            ` : ''}
-                            
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="fas fa-chart-line text-success me-2"></i>
-                                        <div>
-                                            <small class="text-muted d-block">ML Price Target</small>
-                                            <strong>₹${data.ml_prediction.price ? data.ml_prediction.price.toLocaleString() : 'N/A'}</strong>
-                                            <span class="badge bg-success ms-2">${data.ml_prediction.confidence || 0}%</span>
-                                        </div>
-                                    </div>
+                                <div class="col-md-3 calc-item">
+                                    <div class="calc-label">Shares</div>
+                                    <div class="calc-value">${data.investment?.shares || 0}</div>
+                                    <div class="calc-subtext">@ ₹${(data.investment?.buy_price || 0).toFixed(2)}</div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="fas fa-robot text-primary me-2"></i>
-                                        <div>
-                                            <small class="text-muted d-block">AI Adjusted Target</small>
-                                            <strong>₹${data.ai_prediction.adjusted_price ? data.ai_prediction.adjusted_price.toLocaleString() : 'N/A'}</strong>
-                                            <span class="badge bg-primary ms-2">${data.ai_prediction.confidence || 0}%</span>
-                                        </div>
+                                <div class="col-md-3 calc-item">
+                                    <div class="calc-label">Target Value</div>
+                                    <div class="calc-value">₹${(data.investment?.predicted_value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                                    <div class="calc-subtext">@ ₹${(data.investment?.target_price || 0).toFixed(2)}</div>
+                                </div>
+                                <div class="col-md-3 calc-item">
+                                    <div class="calc-label">Expected Profit</div>
+                                    <div class="calc-value text-${data.investment?.profit_loss >= 0 ? 'success' : 'danger'}">
+                                        ${data.investment?.profit_loss >= 0 ? '+' : ''}₹${(data.investment?.profit_loss || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                     </div>
+                                    <div class="calc-subtext">${data.investment?.profit_loss_percent >= 0 ? '+' : ''}${(data.investment?.profit_loss_percent || 0).toFixed(2)}%</div>
                                 </div>
                             </div>
-                            
-                            ${data.dividend_analysis.has_dividends ? `
-                                <div class="alert alert-warning mb-3">
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            <small><i class="fas fa-coins me-1"></i><strong>Dividends:</strong> ₹${data.dividend_analysis.expected_dividends_period ? data.dividend_analysis.expected_dividends_period.toFixed(2) : '0.00'}</small>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <small><i class="fas fa-percentage me-1"></i><strong>Return:</strong> ${data.dividend_analysis.dividend_return_percent ? data.dividend_analysis.dividend_return_percent.toFixed(2) : '0.00'}%</small>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <small><i class="fas fa-chart-line me-1"></i><strong>Yield:</strong> ${data.dividend_analysis.dividend_yield.toFixed(2)}%/year</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            ` : ''}
-                            
-                            ${data.ai_prediction && data.ai_prediction.summary ? `
-                                <div class="alert alert-info mb-0">
-                                    <strong><i class="fas fa-robot me-2"></i>AI Summary:</strong> ${data.ai_prediction.summary}
-                                </div>
-                            ` : ''}
                         </div>
-                    </div>
-                ` : ''}
-                
-                ${data.news_analysis ? `
-                    <div class="card mb-3 border-info">
-                        <div class="card-header bg-info text-white">
-                            <h6 class="mb-0">
-                                <i class="fas fa-newspaper me-2"></i>
-                                ${data.prediction_type === 'intraday' ? 'Latest News & SI Analysis (Intraday)' : 'News, Future Outlook & Growth Analysis'}
-                            </h6>
-                        </div>
-                        <div class="card-body markdown-content">
-                            ${marked.parse(data.news_analysis)}
-                        </div>
-                    </div>
-                ` : ''}
-                
-                ${data.ai_insight ? `
-                    <div class="card mb-3 border-primary">
-                        <div class="card-header bg-primary text-white">
-                            <h6 class="mb-0"><i class="fas fa-robot me-2"></i>AI Investment Insight</h6>
-                        </div>
-                        <div class="card-body markdown-content">
-                            ${marked.parse(data.ai_insight)}
-                        </div>
-                    </div>
-                ` : ''}
-            </div>
-        </div>
-    `;
-    
-    $('#predictionResult').html(html);
-}
 
-// Toggle news expand/collapse
-function toggleNews(newsId) {
-    const preview = $(`#${newsId}-preview`);
-    const full = $(`#${newsId}-full`);
-    const icon = $(`#${newsId}-icon`);
-    const text = $(`#${newsId}-text`);
-    
-    if (full.is(':visible')) {
-        // Collapse
-        full.slideUp(300);
-        preview.slideDown(300);
-        icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
-        text.text('Read More');
-    } else {
-        // Expand
-        preview.slideUp(300);
-        full.slideDown(300);
-        icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
-        text.text('Show Less');
-        
-        // Track news view
-        console.log('News expanded:', newsId);
-    }
-}
+                        <div class="prediction-stats">
+                            <div class="stat-box">
+                                <div class="stat-label">Current Price</div>
+                                <div class="stat-value">₹${(data.current_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Predicted Price</div>
+                                <div class="stat-value text-${changeClass}">₹${(data.predicted_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Expected Change</div>
+                                <div class="stat-value text-${changeClass}">${data.percent_change > 0 ? '+' : ''}${(data.percent_change || 0).toFixed(2)}%</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Confidence</div>
+                                <div class="stat-value text-primary">${(data.confidence || 0).toFixed(1)}%</div>
+                            </div>
+                        </div>
 
-// Toast notification function
-function showToast(message, type = 'info') {
-    const bgColor = type === 'success' ? 'bg-success' : 
-                    type === 'danger' ? 'bg-danger' : 
-                    type === 'warning' ? 'bg-warning' : 'bg-info';
-    
-    const toast = $(`
-        <div class="toast align-items-center text-white ${bgColor} border-0" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
-            <div class="d-flex">
-                <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        </div>
-    `);
-    
-    $('body').append(toast);
-    const bsToast = new bootstrap.Toast(toast[0], {delay: 3000});
-    bsToast.show();
-    
-    toast.on('hidden.bs.toast', function() {
-        $(this).remove();
-    });
-}
-</script>
-{% endblock %}
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="stat-box text-center">
+                                    <i class="fas ${trendIcon} fs-5 mb-2 d-block"></i>
+                                    <strong>Trend</strong><br>
+                                    <span class="badge badge-${data.trend === 'bullish' ? 'bullish' : 'bearish'}">${data.trend?.toUpperCase() || 'NEUTRAL'}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-box text-center">
+                                    <i class="fas fa-hand-holding-usd fs-5 mb-2 d-block text-${data.recommendation === 'BUY' ? 'success' : 'danger'}"></i>
+                                    <strong>Recommendation</strong><br>
+                                    <span class="badge bg-${data.recommendation === 'BUY' ? 'success' : data.recommendation === 'SELL' ? 'danger' : 'warning'}">${data.recommendation || 'HOLD'}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-box text-center">
+                                    <i class="fas fa-exclamation-triangle fs-5 mb-2 d-block text-warning"></i>
+                                    <strong>Risk Level</strong><br>
+                                    <span class="badge bg-${data.risk_percentage > 70 ? 'danger' : data.risk_percentage > 40 ? 'warning' : 'success'}">${(data.risk_percentage || 0).toFixed(1)}%</span>
+                                </div>
+                            </div>
+                        </div>
+            `;
+
+            // Add AI insights if available
+            // if (data.ai_insight) {
+            //     html += `
+            //         <div class="alert alert-info mt-3">
+            //             <h6><i class="fas fa-robot me-2"></i>AI Insight</h6>
+            //             <div class="markdown-content">${marked.parse(data.ai_insight)}</div>
+            //         </div>
+            //     `;
+            // }
+
+            // Add news analysis if available
+            if (data.news_analysis) {
+                html += `
+                    <div class="alert alert-info mt-3">
+                        <h6><i class="fas fa-newspaper me-2"></i>News Analysis</h6>
+                        <div class="markdown-content">${marked.parse(data.news_analysis)}</div>
+                    </div>
+                `;
+            }
+
+            html += `</div></div>`;
+            $('#predictionResult').html(html);
+        }
+
+        function showToast(message, type = 'info') {
+            const bgColor = type === 'success' ? 'bg-success' : type === 'danger' ? 'bg-danger' : type === 'warning' ? 'bg-warning' : 'bg-info';
+            const toast = $(`
+                <div class="position-fixed p-3" style="top: 20px; right: 20px; z-index: 9999;">
+                    <div class="toast show align-items-center text-white ${bgColor} border-0">
+                        <div class="d-flex">
+                            <div class="toast-body">${message}</div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>
+                </div>
+            `);
+            $('body').append(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+    </script>
+</body>
+
+</html>

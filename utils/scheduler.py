@@ -27,27 +27,37 @@ def monitor_notifications(app):
                 
                 # Check target price
                 if setting.target_price and live_price >= setting.target_price:
+                    # Get AI prediction for this stock
+                    latest_pred = Prediction.query.filter_by(
+                        stock_id=stock.id
+                    ).order_by(Prediction.created_at.desc()).first()
+                    
+                    # Use AI predicted price if available, otherwise use target price
+                    predicted_price = latest_pred.predicted_price if latest_pred else setting.target_price
+                    pred_confidence = latest_pred.confidence if latest_pred else 85
+                    pred_trend = latest_pred.trend if latest_pred else 'bullish'
+                    
                     # Create notification
                     notif = Notification(
                         user_id=user.id,
                         stock_id=stock.id,
                         notification_type='TARGET',
-                        title=f'{stock.symbol} reached target price',
-                        message=f'{stock.name} has reached your target price of ₹{setting.target_price:,.2f}. Current price: ₹{live_price:,.2f}'
+                        title=f'🎯 {stock.symbol} reached target price',
+                        message=f'{stock.name} has reached your target price of ₹{setting.target_price:,.2f}. Current price: ₹{live_price:,.2f}. AI predicts: ₹{predicted_price:,.2f}'
                     )
                     db.session.add(notif)
                     
-                    # Send email
+                    # Send email with AI prediction
                     email_data = {
                         'stock_name': stock.name,
                         'symbol': stock.symbol,
                         'type': 'TARGET',
                         'live_price': live_price,
-                        'predicted_price': setting.target_price,
-                        'confidence': 100,
-                        'change_percent': ((live_price - setting.target_price) / setting.target_price) * 100,
-                        'trend': 'bullish' if live_price > setting.target_price else 'neutral',
-                        'message': f'Your target price of ₹{setting.target_price:,.2f} has been reached!'
+                        'predicted_price': predicted_price,
+                        'confidence': pred_confidence,
+                        'change_percent': ((predicted_price - live_price) / live_price) * 100,
+                        'trend': pred_trend,
+                        'message': f'🎯 Target Price Alert: Your target of ₹{setting.target_price:,.2f} has been reached! AI predicts price may move to ₹{predicted_price:,.2f}'
                     }
                     
                     if send_notification_email(user.email, email_data):
@@ -67,12 +77,20 @@ def monitor_notifications(app):
                         ).first()
                         
                         if not existing:
+                            # Get AI prediction
+                            latest_pred = Prediction.query.filter_by(
+                                stock_id=stock.id
+                            ).order_by(Prediction.created_at.desc()).first()
+                            
+                            predicted_price = latest_pred.predicted_price if latest_pred else live_price * 0.95
+                            pred_confidence = latest_pred.confidence if latest_pred else 80
+                            
                             notif = Notification(
                                 user_id=user.id,
                                 stock_id=stock.id,
                                 notification_type='DROP',
-                                title=f'{stock.symbol} dropped significantly',
-                                message=f'{stock.name} has dropped {abs(change_percent):.2f}% today. Current price: ₹{live_price:,.2f}'
+                                title=f'⚠️ {stock.symbol} dropped significantly',
+                                message=f'{stock.name} has dropped {abs(change_percent):.2f}% today. Current price: ₹{live_price:,.2f}. AI predicts: ₹{predicted_price:,.2f}'
                             )
                             db.session.add(notif)
                             
@@ -81,11 +99,11 @@ def monitor_notifications(app):
                                 'symbol': stock.symbol,
                                 'type': 'DROP',
                                 'live_price': live_price,
-                                'predicted_price': live_price * (1 + abs(change_percent)/100),
-                                'confidence': 90,
-                                'change_percent': change_percent,
+                                'predicted_price': predicted_price,
+                                'confidence': pred_confidence,
+                                'change_percent': ((predicted_price - live_price) / live_price) * 100,
                                 'trend': 'bearish',
-                                'message': f'Alert: Stock has dropped {abs(change_percent):.2f}% today!'
+                                'message': f'⚠️ Price Drop Alert: Stock has dropped {abs(change_percent):.2f}% today! AI predicts recovery to ₹{predicted_price:,.2f}'
                             }
                             
                             if send_notification_email(user.email, email_data):
@@ -113,12 +131,13 @@ def monitor_notifications(app):
                             
                             if not existing:
                                 notif_type = 'BUY' if price_diff_percent > 0 else 'SELL'
+                                action_emoji = '📈' if notif_type == 'BUY' else '📉'
                                 
                                 notif = Notification(
                                     user_id=user.id,
                                     stock_id=stock.id,
                                     notification_type=notif_type,
-                                    title=f'{notif_type} signal for {stock.symbol}',
+                                    title=f'{action_emoji} AI {notif_type} Signal: {stock.symbol}',
                                     message=f'AI predicts {stock.name} may {"rise" if price_diff_percent > 0 else "fall"} by {abs(price_diff_percent):.2f}%. Confidence: {latest_pred.confidence:.1f}%'
                                 )
                                 db.session.add(notif)
@@ -132,7 +151,7 @@ def monitor_notifications(app):
                                     'confidence': latest_pred.confidence,
                                     'change_percent': price_diff_percent,
                                     'trend': latest_pred.trend,
-                                    'message': f'AI suggests {notif_type} - Expected change: {price_diff_percent:+.2f}%'
+                                    'message': f'{action_emoji} AI Prediction Alert: AI suggests {notif_type} - Expected change: {price_diff_percent:+.2f}% (Confidence: {latest_pred.confidence:.1f}%)'
                                 }
                                 
                                 if send_notification_email(user.email, email_data):
@@ -221,10 +240,10 @@ def start_scheduler(app):
     """Start background scheduler"""
     scheduler = BackgroundScheduler()
     
-    # Monitor notifications every 5 minutes
+    # Monitor notifications every 1 minute for real-time alerts
     scheduler.add_job(
         func=lambda: monitor_notifications(app),
-        trigger=IntervalTrigger(minutes=5),
+        trigger=IntervalTrigger(minutes=1),
         id='monitor_notifications',
         name='Monitor stock notifications',
         replace_existing=True

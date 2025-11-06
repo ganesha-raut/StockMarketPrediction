@@ -40,7 +40,7 @@ class GeminiAI:
     def get_stock_suggestions(self, market_data=None, limit=4):
         """Get AI-suggested stocks based on market analysis"""
         try:
-            if not self.api_key:
+            if not self.base_url:
                 return self._get_fallback_suggestions(limit)
             
             prompt = f"""
@@ -56,10 +56,10 @@ class GeminiAI:
             Return ONLY a valid JSON array with this structure:
             [
                 {{
-                    "symbol": "TCS",
-                    "name": "Tata Consultancy Services",
-                    "reason": "Strong Q4 results with 15% YoY growth. AI suggests bullish momentum.",
-                    "sentiment": "bullish"
+                    "symbol": "",
+                    "name": "",
+                    "reason": "",
+                    "sentiment": ""
                 }}
             ]
             

@@ -348,7 +348,7 @@ class AdaptiveMonitorService:
     def send_prediction_email(self, recommendations):
         """Send email with predictions and AI recommendations"""
         try:
-            subject = f"📊 Stock Predictions & AI Recommendations - {datetime.now().strftime('%Y-%m-%d')}"
+            subject = f"📊 Stock Predictions & AI Recommendations - {datetime.now().strftime('%Y-%m-%d %I:%M %p')}"
             
             categorized = recommendations['categorized_stocks']
             
@@ -360,10 +360,50 @@ class AdaptiveMonitorService:
                 .bullish {{ background: #e8f5e9; }}
                 .bearish {{ background: #ffebee; }}
                 .strong {{ font-weight: bold; border: 2px solid; }}
+                .prediction-table {{ width: 100%; border-collapse: collapse; margin: 10px 0; }}
+                .prediction-table th {{ background: #2196F3; color: white; padding: 10px; text-align: left; }}
+                .prediction-table td {{ padding: 8px; border-bottom: 1px solid #ddd; }}
+                .up {{ color: green; font-weight: bold; }}
+                .down {{ color: red; font-weight: bold; }}
             </style></head><body>
             <div class="header">
                 <h1>📊 Daily Stock Predictions</h1>
-                <p>{datetime.now().strftime('%A, %B %d, %Y - 10:00 AM')}</p>
+                <p>{datetime.now().strftime('%A, %B %d, %Y - %I:%M %p')}</p>
+            </div>
+            <div class="section">
+                <h2>📈 ALL STOCK PREDICTIONS</h2>
+                <table class="prediction-table">
+                    <tr>
+                        <th>Stock</th>
+                        <th>Current Price</th>
+                        <th>Predicted Price</th>
+                        <th>Change</th>
+                        <th>Trend</th>
+                        <th>Algorithm</th>
+                    </tr>"""
+            
+            # Get today's predictions from database
+            today = datetime.now().date()
+            predictions = Prediction.query.filter_by(prediction_date=today).all()
+            
+            for pred in predictions:
+                change = pred.predicted_price - pred.current_price
+                change_pct = (change / pred.current_price) * 100
+                change_class = 'up' if change > 0 else 'down'
+                trend_emoji = '📈' if pred.trend == 'bullish' else '📉'
+                
+                body += f"""
+                    <tr>
+                        <td><strong>{pred.stock.symbol}</strong><br><small>{pred.stock.name}</small></td>
+                        <td>₹{pred.current_price:.2f}</td>
+                        <td>₹{pred.predicted_price:.2f}</td>
+                        <td class="{change_class}">{change:+.2f} ({change_pct:+.2f}%)</td>
+                        <td>{trend_emoji} {pred.trend.upper()}</td>
+                        <td>{pred.algorithm_used or 'N/A'}</td>
+                    </tr>"""
+            
+            body += """
+                </table>
             </div>
             <div class="section">
                 <h2>🎯 AI RECOMMENDED STOCKS</h2>"""

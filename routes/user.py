@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
-from models import db, Stock, Watchlist, Notification, NotificationSetting, HistoricalData
+from models import db, Stock, Watchlist, Notification, NotificationSetting, HistoricalData, User
 from utils.stock_data import get_google_stock_data, check_market_status, get_stock_news
 from utils.gemini_ai import get_gemini
 from datetime import datetime
@@ -13,7 +13,7 @@ user_bp = Blueprint('user', __name__)
 @login_required
 def home():
     """User home page - SPA version for fast loading"""
-    return render_template('user/home.html')
+    return render_template('user/User_dash.html')
 
 @user_bp.route('/watchlist')
 @login_required
@@ -48,6 +48,84 @@ def api_market_status():
     """Get market status"""
     try:
         status = check_market_status()
+        return jsonify({
+            'success': True,
+            'data': status
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        })
+
+@user_bp.route('/api/profile/update', methods=['POST'])
+@login_required
+def update_profile():
+    """Update user profile"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'No data provided'
+            }), 400
+
+        username = data.get('username', '').strip()
+        email = data.get('email', '').strip()
+
+        # Validate inputs
+        if not username:
+            return jsonify({
+                'success': False,
+                'errors': {'username': 'Username is required'}
+            }), 400
+
+        if not email:
+            return jsonify({
+                'success': False,
+                'errors': {'email': 'Email is required'}
+            }), 400
+
+        # Check if username is taken (excluding current user)
+        existing_user = User.query.filter(
+            User.username == username,
+            User.id != current_user.id
+        ).first()
+        if existing_user:
+            return jsonify({
+                'success': False,
+                'errors': {'username': 'Username is already taken'}
+            }), 400
+
+        # Check if email is taken (excluding current user)
+        existing_user = User.query.filter(
+            User.email == email,
+            User.id != current_user.id
+        ).first()
+        if existing_user:
+            return jsonify({
+                'success': False,
+                'errors': {'email': 'Email is already taken'}
+            }), 400
+
+        # Update user profile
+        current_user.username = username
+        current_user.email = email
+        current_user.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Profile updated successfully'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'An error occurred: {str(e)}'
+        }), 500
         return jsonify({'success': True, 'data': status})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
