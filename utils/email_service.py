@@ -1,17 +1,22 @@
 from flask_mail import Mail, Message
 from flask import render_template, current_app
 from threading import Thread
+import logging
 
 mail = Mail()
+logger = logging.getLogger(__name__)
 
 def send_async_email(app, msg):
     """Send email asynchronously"""
     with app.app_context():
         try:
             mail.send(msg)
+            logger.info(f"✅ Email sent successfully to {msg.recipients}")
             return True
         except Exception as e:
-            print(f"Error sending email: {e}")
+            logger.error(f"❌ Error sending email to {msg.recipients}: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
             return False
 
 def send_email(subject, recipients, html_body, text_body=None):
@@ -19,19 +24,44 @@ def send_email(subject, recipients, html_body, text_body=None):
     try:
         app = current_app._get_current_object()
         
+        # Check if email is properly configured
+        if not app.config.get('MAIL_USERNAME') or not app.config.get('MAIL_PASSWORD'):
+            logger.error("❌ Email not configured - MAIL_USERNAME or MAIL_PASSWORD missing")
+            logger.warning(f"Recipients: {recipients}, Subject: {subject}")
+            return False
+        
+        # Ensure recipients is a list
+        recipient_list = recipients if isinstance(recipients, list) else [recipients]
+        
         msg = Message(
             subject=subject,
-            recipients=recipients if isinstance(recipients, list) else [recipients],
+            recipients=recipient_list,
             html=html_body,
-            body=text_body or "Please view this email in HTML format."
+            body=text_body or "Please view this email in HTML format.",
+            sender=app.config.get('MAIL_DEFAULT_SENDER', app.config.get('MAIL_USERNAME'))
         )
         
-        # Send asynchronously
-        Thread(target=send_async_email, args=(app, msg)).start()
-        return True
+        logger.info(f"📧 Sending email to {recipient_list} - Subject: {subject}")
+        
+        # Send asynchronously in background thread
+        try:
+            thread = Thread(target=send_async_email, args=(app, msg), daemon=True)
+            thread.start()
+            logger.info(f"✅ Email queued for sending to {recipient_list}")
+            return True
+        except Exception as thread_err:
+            logger.error(f"Error starting email thread: {str(thread_err)}")
+            # Try to send synchronously as fallback
+            try:
+                mail.send(msg)
+                logger.info(f"✅ Email sent synchronously to {recipient_list}")
+                return True
+            except Exception as sync_err:
+                logger.error(f"❌ Failed to send email synchronously: {str(sync_err)}")
+                return False
         
     except Exception as e:
-        print(f"Error preparing email: {e}")
+        logger.error(f"Error preparing email: {str(e)}")
         return False
 
 def send_otp_email(email, otp_code, purpose="verification"):

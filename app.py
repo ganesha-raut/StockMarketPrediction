@@ -6,6 +6,8 @@ from utils.email_service import mail
 from utils.gemini_ai import init_gemini
 from datetime import datetime
 import os
+import logging
+from logging.handlers import RotatingFileHandler
 
 # Import blueprints
 from routes.auth import auth_bp
@@ -17,6 +19,10 @@ def create_app(config_name='default'):
     """Application factory"""
     app = Flask(__name__)
     app.config.from_object(config[config_name])
+    
+    # Ensure instance directory exists with proper permissions
+    instance_path = app.config.get('INSTANCE_PATH', 'instance')
+    os.makedirs(instance_path, exist_ok=True)
     
     # Initialize extensions
     db.init_app(app)
@@ -86,6 +92,23 @@ def create_app(config_name='default'):
     # Initialize database
     with app.app_context():
         db.create_all()
+        
+        # Setup logging
+        if not app.debug:
+            if not os.path.exists('logs'):
+                os.mkdir('logs')
+            
+            file_handler = RotatingFileHandler('logs/app.log', maxBytes=10240000, backupCount=10)
+            file_handler.setFormatter(logging.Formatter(
+                '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+            ))
+            file_handler.setLevel(logging.INFO)
+            app.logger.addHandler(file_handler)
+            app.logger.setLevel(logging.INFO)
+            app.logger.info('AI Stock Prediction App startup')
+        
+        # Setup email service logging
+        logging.getLogger('utils.email_service').setLevel(logging.INFO)
         
         # Create default admin user if not exists
         admin = User.query.filter_by(email='admin@stockai.com').first()
